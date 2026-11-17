@@ -225,12 +225,13 @@ button{font-family:inherit}
 <div class="wrap">
   <header class="top">
     <h1>Cắt nhạc <span>25 giây</span></h1>
-    <p>Chọn 1 file nhạc, trang tự chia thành các đoạn đúng 25 giây, các đoạn cách nhau 0,01 giây. Nghe thử từng đoạn rồi tải về riêng lẻ với tên file ngắn gọn — định dạng chọn được: MP3 hoặc WAV.</p>
+    <p>Chọn 1 file nhạc, trang tự chia thành các đoạn đúng 25 giây, các đoạn cách nhau 0,01 giây. Nghe thử từng đoạn, bấm nút Chia sẻ là mở thẳng menu chia sẻ để lưu file — đóng menu là quay lại ngay trang này, không bị kẹt ở màn hình tải xuống.</p>
     <div class="meta-row">
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy — không tải lên server</span>
       <span class="pill">Mỗi đoạn <b>25s</b> · cách nhau <b>0,01s</b></span>
       <span class="pill">Tên file <b>ngắn gọn</b></span>
       <span class="pill">Xuất ra <b>MP3</b> hoặc <b>WAV</b></span>
+      <span class="pill">Lưu qua <b>menu Chia sẻ</b></span>
     </div>
   </header>
 
@@ -283,7 +284,7 @@ button{font-family:inherit}
     </div>
     <div class="renamefmt">
       <div class="outfmt-head">
-        <label for="namePrefix">Tên file tải xuống — ngắn gọn</label>
+        <label for="namePrefix">Tên file khi lưu — ngắn gọn</label>
         <span>Không kèm tên file gốc</span>
       </div>
       <div class="rename-row">
@@ -298,11 +299,11 @@ button{font-family:inherit}
   <div class="toolbar" id="toolbar">
     <div>
       <h2>Danh sách đoạn</h2>
-      <p id="toolbarSub">Bấm ▶ để nghe thử, bấm Tải để lưu từng đoạn.</p>
+      <p id="toolbarSub">Bấm ▶ để nghe thử, bấm Chia sẻ để mở menu lưu từng đoạn.</p>
     </div>
     <div class="toolbar-actions">
       <button class="btn btn-outline" id="stopBtn" type="button">■ Dừng phát</button>
-      <button class="btn btn-primary" id="downloadAllBtn" type="button">⬇ Tải tất cả (.mp3)</button>
+      <button class="btn btn-primary" id="downloadAllBtn" type="button">⬆ Chia sẻ tất cả (.mp3)</button>
     </div>
   </div>
 
@@ -311,7 +312,7 @@ button{font-family:inherit}
   <div class="how">
     <div><b>1. Chọn nhạc</b><p>Bấm chọn file hoặc kéo thả. Trang đọc file ngay trên trình duyệt.</p></div>
     <div><b>2. Tự cắt 25s, cách nhau 0,01s</b><p>Đoạn 1: 0–25s, đoạn 2: 25,01–50,01s, đoạn 3: 50,02–75,02s… cứ thế tiếp nối. Đoạn cuối lấy phần còn lại nếu ngắn hơn 25s.</p></div>
-    <div><b>3. Tải từng đoạn</b><p>Chọn MP3 hoặc WAV và đặt tên ngắn trong thẻ file ở trên. Mỗi đoạn có nút tải riêng, tên file ngắn gọn kiểu 01, 02… không kèm tên file gốc.</p></div>
+    <div><b>3. Chia sẻ để lưu từng đoạn</b><p>Chọn MP3 hoặc WAV và đặt tên ngắn trong thẻ file ở trên. Bấm nút Chia sẻ của đoạn là trang nén xong rồi mở thẳng menu chia sẻ — chọn “Lưu vào Tệp” để lưu. Đóng menu chia sẻ là tự quay lại trang này, không bị kẹt.</p></div>
   </div>
   <p class="note">File càng dài thì lần cắt đầu tiên càng lâu vài giây. Nếu trình duyệt không đọc được file, hãy đổi sang MP3 / WAV rồi thử lại.</p>
 </div>
@@ -379,7 +380,7 @@ button{font-family:inherit}
     var labels = segmentList.querySelectorAll('.seg-file');
     for(var i=0;i<labels.length;i++){
       var idx = parseInt(labels[i].getAttribute('data-idx'), 10) || 0;
-      labels[i].textContent = '⬇ ' + shortName(idx);
+      labels[i].textContent = '⬆ ' + shortName(idx);
     }
   }
   if(namePrefixInput){
@@ -395,10 +396,10 @@ button{font-family:inherit}
   }
 
   function refreshDownloadLabels(){
-    downloadAllBtn.textContent = '⬇ Tải tất cả (.' + outFormat + ')';
+    downloadAllBtn.textContent = '⬆ Chia sẻ tất cả (.' + outFormat + ')';
     var btns = segmentList.querySelectorAll('.dl-btn');
     for(var i=0;i<btns.length;i++){
-      btns[i].textContent = '⬇ Tải đoạn ' + (i+1) + ' (.' + outFormat + ')';
+      btns[i].textContent = '⬆ Chia sẻ đoạn ' + (i+1) + ' (.' + outFormat + ')';
     }
   }
 
@@ -561,34 +562,65 @@ button{font-family:inherit}
     return n || 'nhac';
   }
 
-  function downloadSegment(idx, btn){
-    if(!currentBuffer) return;
-    var seg = segments[idx];
-    var blob, ext;
-    try{
-      if(outFormat === 'mp3'){
-        if(btn){ btn.disabled = true; btn.textContent = 'Đang nén MP3…'; }
-        blob = sliceToMp3Blob(currentBuffer, seg.start, seg.end);
-        ext = 'mp3';
-      } else {
-        blob = sliceToWavBlob(currentBuffer, seg.start, seg.end);
-        ext = 'wav';
-      }
-    }catch(err){
-      console.error(err);
-      showStatus(err && err.message ? err.message : 'Không tạo được file MP3 — Anh thử chọn WAV.', 'error');
-      if(btn){ btn.disabled = false; refreshDownloadLabels(); }
-      return;
+  // Encode one segment into a Blob in the chosen output format.
+  function encodeSegment(seg){
+    if(outFormat === 'mp3'){
+      return { blob: sliceToMp3Blob(currentBuffer, seg.start, seg.end), ext: 'mp3' };
     }
-    if(btn){ btn.disabled = false; refreshDownloadLabels(); }
+    return { blob: sliceToWavBlob(currentBuffer, seg.start, seg.end), ext: 'wav' };
+  }
+
+  function canShareFiles(files){
+    try{
+      return !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
+    }catch(e){ return false; }
+  }
+
+  // Classic anchor download — only used when the browser cannot share files.
+  function fallbackDownload(blob, name){
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = shortName(seg.index, ext);
+    a.download = name;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
+
+  // Encode, then open the system share sheet straight away. The page never
+  // navigates away, so when the sheet closes the user is right back on the
+  // segment list — no getting stuck on a download screen.
+  async function shareSegment(idx, btn){
+    if(!currentBuffer) return;
+    var seg = segments[idx];
+    var enc;
+    try{
+      if(btn){ btn.disabled = true; btn.textContent = outFormat === 'mp3' ? 'Đang nén MP3…' : 'Đang chuẩn bị…'; }
+      enc = encodeSegment(seg);
+    }catch(err){
+      console.error(err);
+      showStatus(err && err.message ? err.message : 'Không tạo được file — Anh thử chọn WAV.', 'error');
+      if(btn){ btn.disabled = false; refreshDownloadLabels(); }
+      return;
+    }
+    if(btn){ btn.disabled = false; refreshDownloadLabels(); }
+    var name = shortName(seg.index, enc.ext);
+    var file = new File([enc.blob], name, { type: enc.blob.type });
+    if(canShareFiles([file])){
+      try{
+        await navigator.share({ files: [file], title: name });
+        // Share sheet closed (saved or cancelled) — we never left this page.
+      }catch(err){
+        if(err && err.name === 'AbortError'){
+          // User dismissed the sheet: stay quietly on the page.
+        } else {
+          fallbackDownload(enc.blob, name);
+        }
+      }
+    } else {
+      fallbackDownload(enc.blob, name);
+    }
   }
 
   function playSegment(idx, btn){
@@ -640,7 +672,7 @@ button{font-family:inherit}
       main.className='seg-main';
       var isShort = seg.duration < SEG - 0.05;
       var isLast = seg.index === segments.length - 1;
-      main.innerHTML = '<strong>Đoạn '+(seg.index+1)+ (isShort && isLast ? ' — đoạn cuối' : '') +'</strong><span>'+timeCode(seg.start)+' → '+timeCode(seg.end)+' &nbsp;•&nbsp; '+seg.duration.toFixed(2)+' giây</span><span class="seg-file" data-idx="'+seg.index+'">⬇ '+shortName(seg.index)+'</span>';
+      main.innerHTML = '<strong>Đoạn '+(seg.index+1)+ (isShort && isLast ? ' — đoạn cuối' : '') +'</strong><span>'+timeCode(seg.start)+' → '+timeCode(seg.end)+' &nbsp;•&nbsp; '+seg.duration.toFixed(2)+' giây</span><span class="seg-file" data-idx="'+seg.index+'">⬆ '+shortName(seg.index)+'</span>';
 
       var badge = document.createElement('span');
       badge.className = 'seg-badge' + (isShort ? ' short' : '');
@@ -659,8 +691,8 @@ button{font-family:inherit}
       var dlBtn = document.createElement('button');
       dlBtn.className='dl-btn';
       dlBtn.type='button';
-      dlBtn.textContent='⬇ Tải đoạn '+(seg.index+1)+' (.'+outFormat+')';
-      dlBtn.addEventListener('click', function(){ downloadSegment(seg.index, dlBtn); });
+      dlBtn.textContent='⬆ Chia sẻ đoạn '+(seg.index+1)+' (.'+outFormat+')';
+      dlBtn.addEventListener('click', function(){ shareSegment(seg.index, dlBtn); });
 
       actions.appendChild(playBtn);
       actions.appendChild(dlBtn);
@@ -789,21 +821,51 @@ button{font-family:inherit}
     openPicker();
   });
   stopBtn.addEventListener('click', stopPlayback);
-  downloadAllBtn.addEventListener('click', function(){
-    if(!segments.length) return;
-    // sequential downloads with delay so browser doesn't block
-    var i=0;
+  downloadAllBtn.addEventListener('click', async function(){
+    if(!segments.length || !currentBuffer) return;
+    // Encode everything first (synchronously, so the share sheet can open
+    // straight from this tap), then share all files in ONE sheet.
     downloadAllBtn.disabled=true;
-    downloadAllBtn.textContent='Đang tải 0/'+segments.length+'…';
+    downloadAllBtn.textContent='Đang chuẩn bị '+segments.length+' đoạn…';
+    var items = [];
+    try{
+      for(var i=0;i<segments.length;i++){
+        var enc = encodeSegment(segments[i]);
+        items.push({ blob: enc.blob, name: shortName(segments[i].index, enc.ext) });
+      }
+    }catch(err){
+      console.error(err);
+      showStatus(err && err.message ? err.message : 'Không tạo được file — Anh thử chọn WAV.', 'error');
+      downloadAllBtn.disabled=false;
+      refreshDownloadLabels();
+      return;
+    }
+    var files = items.map(function(it){ return new File([it.blob], it.name, { type: it.blob.type }); });
+    downloadAllBtn.disabled=false;
+    refreshDownloadLabels();
+    if(canShareFiles(files)){
+      try{
+        await navigator.share({ files: files, title: 'Các đoạn nhạc 25s đã cắt' });
+        // Sheet closed — still on this page, nothing to navigate back from.
+        return;
+      }catch(err){
+        if(err && err.name === 'AbortError') return; // user dismissed: stay on page
+        // Share failed for another reason: fall through to classic downloads.
+      }
+    }
+    // Fallback for browsers without file sharing: sequential downloads.
+    var j=0;
+    downloadAllBtn.disabled=true;
+    downloadAllBtn.textContent='Đang tải 0/'+items.length+'…';
     function next(){
-      if(i>=segments.length){
+      if(j>=items.length){
         downloadAllBtn.disabled=false;
         refreshDownloadLabels();
         return;
       }
-      downloadSegment(i);
-      i++;
-      downloadAllBtn.textContent='Đang tải '+i+'/'+segments.length+'…';
+      fallbackDownload(items[j].blob, items[j].name);
+      j++;
+      downloadAllBtn.textContent='Đang tải '+j+'/'+items.length+'…';
       setTimeout(next, outFormat==='mp3' ? 900 : 650);
     }
     next();
