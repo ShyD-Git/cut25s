@@ -253,7 +253,7 @@ button{font-family:inherit}
 <div class="wrap">
   <header class="top">
     <h1>Cắt nhạc <span id="titleSeg">25 giây</span></h1>
-    <p class="vibe">VibeCode by <b>Dương Đăng</b></p>
+    <p class="vibe">Vibe Code by <b>Dương Đăng</b></p>
     <p id="introText">Chọn 1 file nhạc — trang tự cắt thành các đoạn 25 giây, cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới nếu muốn. Nghe thử rồi bấm Chia sẻ để lưu.</p>
     <div class="meta-row">
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
@@ -284,19 +284,18 @@ button{font-family:inherit}
       </div>
       <div class="dur-presets" role="group" aria-label="Chọn nhanh thời lượng mỗi đoạn">
         <button class="dur-btn" type="button" data-dur="10">10s</button>
-        <button class="dur-btn" type="button" data-dur="15">15s</button>
         <button class="dur-btn" type="button" data-dur="20">20s</button>
         <button class="dur-btn active" type="button" data-dur="25">25s</button>
         <button class="dur-btn" type="button" data-dur="30">30s</button>
         <button class="dur-btn" type="button" data-dur="60">60s</button>
       </div>
       <div class="dur-custom">
-        <input class="dur-input" id="durCustom" type="number" inputmode="decimal" min="1" max="600" step="1" placeholder="Tự nhập — vd 45" autocomplete="off" />
+        <input class="dur-input" id="durCustom" type="text" inputmode="decimal" placeholder="Tự nhập — vd 36,8" autocomplete="off" />
         <span class="dur-unit">giây / đoạn</span>
         <button class="btn btn-accent btn-sm" id="durApply" type="button">Áp dụng</button>
         <button class="btn btn-outline btn-sm" id="durReset" type="button">Về 25s</button>
       </div>
-      <p class="dur-hint">Không cài gì thì vẫn cắt <b>25s/đoạn</b>. Chọn trước khi nạp file hoặc đổi sau cũng được — trang <b>cắt lại ngay</b>, khoảng cách giữa 2 đoạn vẫn giữ <b>0,01s</b>.</p>
+      <p class="dur-hint">Không cài gì thì vẫn cắt <b>25s/đoạn</b>. Nhập được số lẻ như <b>36,8s</b> (gõ 36,8 hoặc 36.8 đều được). Chọn trước khi nạp file hoặc đổi sau cũng được — trang <b>cắt lại ngay</b>, khoảng cách giữa 2 đoạn vẫn giữ <b>0,01s</b>.</p>
     </div>
   </section>
 
@@ -369,7 +368,7 @@ button{font-family:inherit}
   </div>
   <p class="note">File dài thì lần cắt đầu lâu hơn vài giây. Đoạn MP3 đã cắt đúng độ dài từng đoạn nên ghép vào CapCut không còn dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: CN25S-V8 · 17/11/2026</p>
+    <p class="upd">Mã cập nhật: CN25S-V9 · 17/11/2026</p>
   </footer>
 </div>
 
@@ -515,10 +514,18 @@ button{font-family:inherit}
     refreshNamePreview();
     refreshToolbarSub();
   }
+  function parseDurationInput(raw){
+    if(typeof raw === 'number') return raw;
+    var s = String(raw == null ? '' : raw).trim().toLowerCase();
+    // Accept "36,8", "36.8", "36,8s", "36.8s", "36.8 giây"
+    s = s.replace(/\s*giây\s*$/, '').replace(/\s*s\s*$/, '').trim();
+    s = s.replace(',', '.');
+    return parseFloat(s);
+  }
   function setSegDuration(sec, fromCustom){
-    var v = Math.round(parseFloat(sec) * 100) / 100;
+    var v = Math.round(parseDurationInput(sec) * 100) / 100;
     if(!isFinite(v) || isNaN(v)){
-      showStatus('Anh nhập số giây hợp lệ nhé — ví dụ 15, 25 hoặc 45.', 'error');
+      showStatus('Anh nhập số giây hợp lệ nhé — ví dụ 25, 36,8 hoặc 45.', 'error');
       return false;
     }
     if(v < 1 || v > 600){
