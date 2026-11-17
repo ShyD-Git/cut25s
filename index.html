@@ -272,13 +272,13 @@ button{font-family:inherit}
         <span id="fmtHint">Đổi lúc nào cũng được, không cần cắt lại</span>
       </div>
       <div class="fmt-group" role="group" aria-label="Chọn định dạng xuất">
-        <button class="fmt-btn" id="fmtMp3" type="button"><b>MP3</b><small>Nhẹ, mở được ở mọi nơi</small></button>
-        <button class="fmt-btn active" id="fmtWav" type="button"><b>WAV</b><small>Không nén, chất lượng gốc</small></button>
+        <button class="fmt-btn active" id="fmtMp3" type="button"><b>MP3</b><small>Nhẹ, mở được ở mọi nơi</small></button>
+        <button class="fmt-btn" id="fmtWav" type="button"><b>WAV</b><small>Không nén, chất lượng gốc</small></button>
       </div>
-      <div class="bitrate-row" id="bitrateRow">
+      <div class="bitrate-row show" id="bitrateRow">
         <span>Chất lượng MP3:</span>
-        <button class="br-btn" type="button" data-br="128">128k</button>
-        <button class="br-btn active" type="button" data-br="192">192k</button>
+        <button class="br-btn active" type="button" data-br="128">128k</button>
+        <button class="br-btn" type="button" data-br="192">192k</button>
         <button class="br-btn" type="button" data-br="320">320k</button>
       </div>
     </div>
@@ -351,8 +351,8 @@ button{font-family:inherit}
   var fmtWavBtn = document.getElementById('fmtWav');
   var bitrateRow = document.getElementById('bitrateRow');
   var fmtHint = document.getElementById('fmtHint');
-  var outFormat = 'mp3'; // 'mp3' | 'wav' — default follows the input file once loaded
-  var mp3Bitrate = 192;
+  var outFormat = 'mp3'; // 'mp3' | 'wav' — default is MP3
+  var mp3Bitrate = 128; // default MP3 quality: 128k
   var inputExt = '';
 
   // Short filename state (no original filename prefix)
@@ -423,7 +423,7 @@ button{font-family:inherit}
   bitrateRow.addEventListener('click', function(e){
     var b = e.target.closest ? e.target.closest('.br-btn') : null;
     if(!b) return;
-    mp3Bitrate = parseInt(b.getAttribute('data-br'), 10) || 192;
+    mp3Bitrate = parseInt(b.getAttribute('data-br'), 10) || 128;
     var all = bitrateRow.querySelectorAll('.br-btn');
     for(var i=0;i<all.length;i++) all[i].classList.toggle('active', all[i]===b);
   });
@@ -761,7 +761,9 @@ button{font-family:inherit}
       toolbar.classList.add('show');
       document.getElementById('toolbarSub').textContent = count + ' đoạn • mỗi đoạn 25s, cách nhau 0,01s' + (count && segments[count-1].duration < SEG-0.05 ? ', đoạn cuối '+segments[count-1].duration.toFixed(2)+'s.' : '.') + ' Tên file ngắn gọn, không kèm tên gốc.';
       inputExt = detectExt(file);
-      if(inputExt === 'mp3' || inputExt === 'wav') setFormat(inputExt);
+      // Default stays MP3 128k regardless of the input format; the user can
+      // still switch to WAV (or another bitrate) manually at any time.
+      setFormat('mp3');
       renderSegments();
       refreshDownloadLabels();
       setProgress(100);
@@ -871,7 +873,7 @@ button{font-family:inherit}
     next();
   });
 
-  // Initialise selector UI (MP3 default until a file tells us otherwise)
+  // Initialise selector UI — default MP3 at 128k
   setFormat('mp3');
 })();
 </script>
