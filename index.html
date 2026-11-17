@@ -372,7 +372,7 @@ button{font-family:inherit}
   </div>
   <p class="note">File dài thì lần cắt đầu lâu hơn vài giây. Đoạn MP3 đã cắt đúng độ dài từng đoạn nên ghép vào CapCut không còn dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: CN25S-V12 · 17/11/2026</p>
+    <p class="upd">Mã cập nhật: CN25S-V13 · 17/11/2026</p>
   </footer>
 </div>
 
@@ -946,7 +946,9 @@ button{font-family:inherit}
     var file = new File([enc.blob], name, { type: enc.blob.type });
     if(canShareFiles([file])){
       try{
-        await navigator.share({ files: [file], title: name });
+        // No title/text here on purpose: iOS turns a share title into an
+        // extra .txt file when the user picks "Save to Files".
+        await navigator.share({ files: [file] });
         // Share sheet closed (saved or cancelled) — we never left this page.
       }catch(err){
         if(err && err.name === 'AbortError'){
@@ -1255,7 +1257,8 @@ button{font-family:inherit}
     refreshDownloadLabels();
     if(canShareFiles(files)){
       try{
-        await navigator.share({ files: files, title: 'Các đoạn nhạc '+durShort(SEG)+' đã cắt' });
+        // Files only, no title: a title becomes a stray .txt on iOS "Save to Files".
+        await navigator.share({ files: files });
         // Sheet closed — still on this page, nothing to navigate back from.
         return;
       }catch(err){
