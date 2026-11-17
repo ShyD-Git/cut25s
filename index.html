@@ -144,16 +144,20 @@ button{font-family:inherit}
 .seg-actions{display:flex;gap:8px;flex-shrink:0}
 .icon-btn{
   width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);
-  display:grid;place-items:center;cursor:pointer;font-size:16px;color:var(--text);
+  position:relative;padding:0;line-height:0;cursor:pointer;color:var(--text);
+  -webkit-appearance:none;appearance:none;
 }
 .icon-btn.playing{background:var(--accent);color:#fff;border-color:var(--accent)}
-.icon-btn svg{width:18px;height:18px;fill:currentColor;display:block}
+.icon-btn svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;fill:currentColor;display:block;pointer-events:none}
 
 /* Playback progress (shown inside the segment card while it plays) */
 .seg-progress{display:none;flex:1 0 100%;align-items:center;gap:10px;margin-top:4px}
 .seg-progress.show{display:flex}
-.sp-track{flex:1;height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden}
-.sp-track i{display:block;height:100%;width:0%;background:var(--accent);border-radius:999px}
+.sp-track{flex:1;position:relative;height:30px;border-radius:999px;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
+.sp-track::before{content:"";position:absolute;left:0;right:0;top:50%;height:6px;transform:translateY(-50%);background:var(--surface-2);border-radius:999px}
+.sp-track i{position:absolute;left:0;top:50%;height:6px;transform:translateY(-50%);width:0%;background:var(--accent);border-radius:999px}
+.sp-knob{position:absolute;top:50%;left:0%;width:19px;height:19px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 1px 5px rgba(11,34,54,.35);transform:translate(-50%,-50%);pointer-events:none}
+@media(prefers-color-scheme: dark){.sp-knob{border-color:#dceefb;box-shadow:0 1px 5px rgba(0,0,0,.6)}}
 .sp-time{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted);white-space:nowrap}
 
 /* Credit under the title + update code at page bottom */
@@ -368,7 +372,7 @@ button{font-family:inherit}
   </div>
   <p class="note">File dài thì lần cắt đầu lâu hơn vài giây. Đoạn MP3 đã cắt đúng độ dài từng đoạn nên ghép vào CapCut không còn dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: CN25S-V9 · 17/11/2026</p>
+    <p class="upd">Mã cập nhật: CN25S-V12 · 17/11/2026</p>
   </footer>
 </div>
 
@@ -399,11 +403,13 @@ button{font-family:inherit}
   var currentBuffer = null;
   var currentFile = null;
   var segments = []; // {index, start, end, duration}
-  var playing = { source:null, index:-1, timer:null, btn:null, raf:null, prog:null, startedAt:0 };
+  var playing = { source:null, index:-1, timer:null, btn:null, raf:null, prog:null, startedAt:0, scrubbing:false };
 
-  // Play / Pause icons as SVG so both glyphs sit dead-center in the round button
-  var ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.8v12.4c0 .8.9 1.3 1.6.9l9.7-6.2c.6-.4.6-1.4 0-1.8L10.1 4.9c-.7-.4-1.6.1-1.6.9z"/></svg>';
-  var ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.2" y="5" width="4.1" height="14" rx="1.2"/><rect x="13.7" y="5" width="4.1" height="14" rx="1.2"/></svg>';
+  // Play / Pause glyphs on a 24 grid with their bounding boxes centred on
+  // (12,12); the button also absolute-centres the SVG itself, so both icons
+  // sit dead-centre in the round button.
+  var ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
   // Output format state
   var fmtMp3Btn = document.getElementById('fmtMp3');
@@ -490,7 +496,7 @@ button{font-family:inherit}
       var rawEnd = sStart + SEG;
       var sEnd = Math.min(duration, rawEnd);
       if(rawEnd < duration) sEnd = Math.round(rawEnd * 100) / 100;
-      var sDur = sEnd - sStart;
+      var sDur = Math.round((sEnd - sStart) * 100) / 100;
       if(sDur <= 0.001) break;
       list.push({index:sIdx, start:sStart, end:sEnd, duration:sDur});
       if(sEnd >= duration - 0.001) break;
@@ -613,6 +619,14 @@ button{font-family:inherit}
     var s = sec%60;
     return m + ':' + (s<10?'0':'') + s;
   }
+  function fmtTotal(sec){
+    // Total length: round to the nearest second, so a full 25s segment
+    // (24.9999…s after float arithmetic) shows 0:25, not 0:24.
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60);
+    var s = sec%60;
+    return m + ':' + (s<10?'0':'') + s;
+  }
   function fmtFull(sec){
     // for filename: 00-25 etc handled elsewhere
     return fmt(sec);
@@ -662,8 +676,10 @@ button{font-family:inherit}
     if(playing.prog){
       playing.prog.box.classList.remove('show');
       playing.prog.fill.style.width='0%';
+      if(playing.prog.knob) playing.prog.knob.style.left='0%';
       playing.prog=null;
     }
+    playing.scrubbing=false;
     if(playing.btn){
       playing.btn.innerHTML=ICON_PLAY;
       playing.btn.classList.remove('playing');
@@ -718,15 +734,19 @@ button{font-family:inherit}
     }
     return out;
   }
-  // MP3 frames are fixed-size (1152 samples at 44.1/48kHz), and LAME adds
-  // ~1105 samples of encoder delay at the head plus padding at the tail.
-  // lamejs writes no gapless (Xing/LAME) header, so editors like CapCut —
-  // which decode every frame in the file — see each segment as ~0.03–0.05s
-  // LONGER than it should be: the leftover tail in the timeline. Fix: skip
-  // the delay's worth of samples when feeding the encoder (so the content
-  // starts on time), then truncate the finished file at the frame boundary
-  // nearest the exact segment length (never more than half a frame over).
-  var MP3_ENC_DELAY = 1105; // LAME encoder+decoder delay, samples per channel
+  // MP3 frames hold a fixed number of samples (1152 at 44.1/48kHz), and the
+  // encoder adds 576 samples of delay at the head plus padding at the tail,
+  // so a raw MP3 stream never decodes to exactly the segment length — video
+  // editors like CapCut snap the extra fraction up to a whole video frame
+  // and the clip sticks out past where it should end (the leftover sliver).
+  // lamejs writes no gapless header, so the page adds one itself, exactly
+  // the way LAME does (see addGaplessHeader): an Info/Xing first frame whose
+  // LAME tag declares the encoder delay and end padding. Players then trim
+  // to the EXACT sample count — a 25s segment is 25.000s, not 25.008s.
+  // (Frame-truncating the file instead, as an earlier version did, still
+  // leaves up to half a frame — ~12ms — of error, which is what CapCut was
+  // rounding up into the visible leftover.)
+  var MP3_ENC_DELAY = 576; // LAME encoder delay, samples per channel
   function mp3FrameInfo(bytes, off){
     if(off + 4 > bytes.length) return null;
     if(bytes[off] !== 0xFF || (bytes[off+1] & 0xE0) !== 0xE0) return null;
@@ -744,7 +764,8 @@ button{font-family:inherit}
     if(ver === 2) sr = sr / 2; else if(ver === 0) sr = sr / 4;
     var spf = ver === 3 ? 1152 : 576; // samples per Layer III frame
     var len = Math.floor((ver === 3 ? 144 : 72) * brTable[brIdx] * 1000 / sr) + pad;
-    return { len: len, spf: spf };
+    var mono = ((bytes[off+3] >> 6) & 0x3) === 3;
+    return { len: len, spf: spf, ver: ver, mono: mono };
   }
   function truncateMp3Frames(bytes, budgetSamples){
     var off = 0;
@@ -766,6 +787,65 @@ button{font-family:inherit}
     if(!cut) return bytes; // parsing failed — keep the encoder output as-is
     return bytes.subarray(0, cut);
   }
+  function writeU32be(bytes, off, val){
+    bytes[off] = (val >>> 24) & 0xFF;
+    bytes[off+1] = (val >>> 16) & 0xFF;
+    bytes[off+2] = (val >>> 8) & 0xFF;
+    bytes[off+3] = val & 0xFF;
+  }
+  // Prepend an Info/Xing header frame to a raw lamejs stream, laid out byte
+  // for byte the way LAME itself writes it: frame count and byte count for
+  // the whole stream (header frame included), then the LAME tag carrying
+  // the encoder delay (576 samples) and the end padding, chosen so that
+  // (total frames × samples-per-frame) − delay − padding equals the exact
+  // segment sample count. Gapless-aware players (ffmpeg, CoreAudio/CapCut…)
+  // then report and play exactly the segment length. Returns null when the
+  // stream cannot be framed this way — the caller falls back to plain
+  // frame truncation.
+  function addGaplessHeader(bytes, contentSamples){
+    var first = mp3FrameInfo(bytes, 0);
+    if(!first) return null;
+    var off = 0, frames = 0;
+    while(off < bytes.length){
+      var info = mp3FrameInfo(bytes, off);
+      if(!info || info.len <= 0) break;
+      frames++;
+      off += info.len;
+    }
+    if(!frames || off !== bytes.length) return null; // trailing junk — bail
+    var spf = first.spf;
+    // Offset of the Xing data inside the frame, by MPEG version and mode.
+    var xingOff = first.ver === 3 ? (first.mono ? 21 : 36) : (first.mono ? 13 : 21);
+    // Xing block: magic(4) flags(4) frames(4) bytes(4) TOC(100) quality(4),
+    // then the 36-byte LAME tag — the first frame must be big enough.
+    if(first.len < xingOff + 120 + 36) return null;
+    var totalFrames = frames + 1;
+    var padding = totalFrames * spf - MP3_ENC_DELAY - contentSamples;
+    if(padding < 0 || padding > 4095) return null; // delay/padding are 12-bit fields
+    var totalBytes = bytes.length + first.len;
+    var frame = new Uint8Array(first.len);
+    frame.set(bytes.subarray(0, 4), 0); // same header as the first audio frame
+    var p = xingOff;
+    frame[p] = 0x49; frame[p+1] = 0x6E; frame[p+2] = 0x66; frame[p+3] = 0x6F; // "Info" (CBR, as LAME writes)
+    p += 4;
+    writeU32be(frame, p, 0xF); p += 4; // flags: frame count + byte count + TOC + quality
+    writeU32be(frame, p, totalFrames); p += 4;
+    writeU32be(frame, p, totalBytes); p += 4;
+    for(var i=0;i<100;i++){ frame[p] = Math.min(255, Math.floor(i * 256 / 100)); p++; }
+    writeU32be(frame, p, 0); p += 4; // quality
+    // LAME tag (36 bytes, spec layout; delay/padding live at bytes 21–23).
+    var t = p;
+    var encStr = 'LAME3.100';
+    for(var s=0;s<9;s++) frame[t+s] = encStr.charCodeAt(s);
+    frame[t+21] = (MP3_ENC_DELAY >> 4) & 0xFF;
+    frame[t+22] = ((MP3_ENC_DELAY & 0xF) << 4) | ((padding >> 8) & 0xF);
+    frame[t+23] = padding & 0xFF;
+    writeU32be(frame, t+28, totalBytes); // music length
+    var out = new Uint8Array(totalBytes);
+    out.set(frame, 0);
+    out.set(bytes, first.len);
+    return out;
+  }
   function sliceToMp3Blob(buffer, startSec, endSec){
     var Mp3Encoder = (window.lamejs && window.lamejs.Mp3Encoder) || window.Mp3Encoder;
     if(!Mp3Encoder) throw new Error('Bộ mã hoá MP3 chưa tải được — Anh thử tải lại trang, hoặc chọn WAV.');
@@ -774,35 +854,43 @@ button{font-family:inherit}
     var endSample = Math.min(buffer.length, Math.floor(endSec * sampleRate));
     var frameCount = endSample - startSample;
     var numCh = Math.min(2, buffer.numberOfChannels);
-    // Feed the encoder starting MP3_ENC_DELAY samples into the segment: the
-    // encoder's own delay then lands exactly where those samples were, so
-    // the audible content sits at its true position in the exported file.
-    var skip = Math.min(MP3_ENC_DELAY, Math.max(0, frameCount - 1));
-    var feedStart = startSample + skip;
-    var feedCount = frameCount - skip;
-    var left = floatTo16(buffer.getChannelData(0), feedStart, feedCount);
-    var right = numCh > 1 ? floatTo16(buffer.getChannelData(1), feedStart, feedCount) : null;
-    var enc = new Mp3Encoder(numCh, sampleRate, mp3Bitrate);
-    var parts = [];
-    var BLOCK = 1152;
-    for(var i=0;i<feedCount;i+=BLOCK){
-      var l = left.subarray(i, i+BLOCK);
-      var data = right ? enc.encodeBuffer(l, right.subarray(i, i+BLOCK)) : enc.encodeBuffer(l);
-      if(data && data.length) parts.push(new Uint8Array(data));
+    // Run lamejs over `count` samples starting at sample `from` of the
+    // decoded buffer and return the joined raw MP3 stream.
+    function runEncoder(from, count){
+      var left = floatTo16(buffer.getChannelData(0), from, count);
+      var right = numCh > 1 ? floatTo16(buffer.getChannelData(1), from, count) : null;
+      var enc = new Mp3Encoder(numCh, sampleRate, mp3Bitrate);
+      var parts = [];
+      var BLOCK = 1152;
+      for(var i=0;i<count;i+=BLOCK){
+        var l = left.subarray(i, i+BLOCK);
+        var data = right ? enc.encodeBuffer(l, right.subarray(i, i+BLOCK)) : enc.encodeBuffer(l);
+        if(data && data.length) parts.push(new Uint8Array(data));
+      }
+      var tail = enc.flush();
+      if(tail && tail.length) parts.push(new Uint8Array(tail));
+      var totalLen = 0;
+      for(var p=0;p<parts.length;p++) totalLen += parts[p].length;
+      var joined = new Uint8Array(totalLen);
+      var pos = 0;
+      for(var q=0;q<parts.length;q++){ joined.set(parts[q], pos); pos += parts[q].length; }
+      return joined;
     }
-    var end = enc.flush();
-    if(end && end.length) parts.push(new Uint8Array(end));
-    // Join, then cut at the frame boundary nearest the exact length so the
-    // file CapCut sees is the segment length — no leftover tail.
-    var totalLen = 0;
-    for(var p=0;p<parts.length;p++) totalLen += parts[p].length;
-    var all = new Uint8Array(totalLen);
-    var pos = 0;
-    for(var q=0;q<parts.length;q++){ all.set(parts[q], pos); pos += parts[q].length; }
+    // Main path: encode the segment at its true position (the header, not
+    // sample-skipping, absorbs the encoder delay), keep every frame, and
+    // stamp the stream with the gapless header so players trim it to the
+    // exact segment length.
+    var raw = runEncoder(startSample, frameCount);
+    var headered = addGaplessHeader(raw, frameCount);
+    if(headered) return new Blob([headered], {type:'audio/mpeg'});
+    // Fallback (stream could not be framed with a header): the previous
+    // approach — feed from 1105 samples in so the content starts on time,
+    // then truncate at the frame boundary nearest the exact length.
+    var skip = Math.min(1105, Math.max(0, frameCount - 1));
+    var legacy = runEncoder(startSample + skip, frameCount - skip);
     var spf = sampleRate >= 32000 ? 1152 : 576;
     var budget = Math.max(spf, Math.round(frameCount / spf) * spf);
-    var trimmed = truncateMp3Frames(all, budget);
-    return new Blob([trimmed], {type:'audio/mpeg'});
+    return new Blob([truncateMp3Frames(legacy, budget)], {type:'audio/mpeg'});
   }
 
   function baseName(name){
@@ -872,6 +960,47 @@ button{font-family:inherit}
     }
   }
 
+  // Move the progress fill, the round knob and the time label together.
+  function setProgUI(prog, ratio, elapsed, dur){
+    var pct = Math.max(0, Math.min(100, ratio * 100));
+    prog.fill.style.width = pct + '%';
+    if(prog.knob) prog.knob.style.left = pct + '%';
+    prog.time.textContent = fmt(elapsed) + ' / ' + fmtTotal(dur);
+  }
+
+  // (Re)start the Web Audio source for seg at `offset` seconds into it —
+  // used both for a fresh play (offset 0) and for seeking while it plays.
+  function startSourceAt(seg, offset){
+    if(playing.source){
+      try{ playing.source.onended=null; playing.source.stop(); }catch(e){}
+      playing.source=null;
+    }
+    if(playing.timer){ clearTimeout(playing.timer); playing.timer=null; }
+    var remain = Math.max(0, seg.duration - offset);
+    var src = audioCtx.createBufferSource();
+    src.buffer = currentBuffer;
+    src.connect(audioCtx.destination);
+    src.start(0, seg.start + offset, remain);
+    playing.source = src;
+    playing.startedAt = audioCtx.currentTime - offset;
+    src.onended = function(){
+      if(playing.index===seg.index) stopPlayback();
+    };
+    // fallback timer in case onended not fired due to manual stop handling
+    playing.timer = setTimeout(function(){
+      if(playing.index===seg.index) stopPlayback();
+    }, remain*1000 + 300);
+  }
+
+  // Seek the currently playing segment to t seconds into it.
+  function seekSegment(seg, t){
+    if(playing.index !== seg.index || !currentBuffer) return;
+    t = Math.max(0, Math.min(seg.duration, t));
+    if(t >= seg.duration - 0.05){ stopPlayback(); return; }
+    startSourceAt(seg, t);
+    if(playing.prog) setProgUI(playing.prog, t / seg.duration, t, seg.duration);
+  }
+
   function playSegment(idx, btn){
     if(!currentBuffer) return;
     ensureCtx();
@@ -882,41 +1011,27 @@ button{font-family:inherit}
     }
     stopPlayback();
     var seg = segments[idx];
-    var src = audioCtx.createBufferSource();
-    src.buffer = currentBuffer;
-    src.connect(audioCtx.destination);
-    src.start(0, seg.start, seg.duration);
-    playing.source = src;
     playing.index = idx;
     playing.btn = btn;
-    playing.startedAt = audioCtx.currentTime;
     btn.innerHTML = ICON_PAUSE;
     btn.classList.add('playing');
     btn.setAttribute('aria-label','Dừng');
-    // Progress bar for this segment: fill + elapsed time while it plays
+    // Progress bar for this segment: fill, draggable knob + elapsed time
     if(seg._prog){
       playing.prog = seg._prog;
       seg._prog.box.classList.add('show');
-      seg._prog.fill.style.width = '0%';
-      seg._prog.time.textContent = '0:00 / ' + fmt(seg.duration);
+      setProgUI(seg._prog, 0, 0, seg.duration);
     }
+    startSourceAt(seg, 0);
     var tick = function(){
       if(playing.index !== idx) return;
-      var elapsed = audioCtx.currentTime - playing.startedAt;
-      if(playing.prog){
-        playing.prog.fill.style.width = Math.min(100, (elapsed / seg.duration) * 100) + '%';
-        playing.prog.time.textContent = fmt(elapsed) + ' / ' + fmt(seg.duration);
+      if(!playing.scrubbing && playing.prog){
+        var elapsed = audioCtx.currentTime - playing.startedAt;
+        setProgUI(playing.prog, elapsed / seg.duration, elapsed, seg.duration);
       }
-      if(elapsed < seg.duration) playing.raf = requestAnimationFrame(tick);
+      playing.raf = requestAnimationFrame(tick);
     };
     playing.raf = requestAnimationFrame(tick);
-    src.onended = function(){
-      if(playing.index===idx) stopPlayback();
-    };
-    // fallback timer in case onended not fired due to manual stop handling
-    playing.timer = setTimeout(function(){
-      if(playing.index===idx) stopPlayback();
-    }, seg.duration*1000 + 300);
   }
 
   function renderSegments(){
@@ -966,8 +1081,43 @@ button{font-family:inherit}
 
       var prog = document.createElement('div');
       prog.className='seg-progress';
-      prog.innerHTML = '<div class="sp-track"><i></i></div><span class="sp-time">0:00 / '+fmt(seg.duration)+'</span>';
-      seg._prog = { box: prog, fill: prog.querySelector('i'), time: prog.querySelector('.sp-time') };
+      prog.innerHTML = '<div class="sp-track" role="slider" aria-label="Kéo núm tròn để tua đoạn này"><i></i><b class="sp-knob"></b></div><span class="sp-time">0:00 / '+fmtTotal(seg.duration)+'</span>';
+      seg._prog = { box: prog, fill: prog.querySelector('i'), knob: prog.querySelector('.sp-knob'), time: prog.querySelector('.sp-time') };
+
+      // Drag the round knob (or tap anywhere on the track) to seek within
+      // this segment while it plays: the bar previews the position during
+      // the drag, and playback jumps there when the finger is released.
+      (function(segRef, trackEl){
+        var scrubT = null;
+        function ratioFromEvent(e){
+          var r = trackEl.getBoundingClientRect();
+          if(!r.width) return 0;
+          return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+        }
+        function preview(e){
+          scrubT = ratioFromEvent(e) * segRef.duration;
+          setProgUI(segRef._prog, scrubT / segRef.duration, scrubT, segRef.duration);
+        }
+        trackEl.addEventListener('pointerdown', function(e){
+          if(playing.index !== segRef.index || !currentBuffer) return;
+          e.preventDefault();
+          try{ trackEl.setPointerCapture(e.pointerId); }catch(err){}
+          playing.scrubbing = true;
+          preview(e);
+        });
+        trackEl.addEventListener('pointermove', function(e){
+          if(!playing.scrubbing || playing.index !== segRef.index) return;
+          preview(e);
+        });
+        function endScrub(){
+          if(!playing.scrubbing) return;
+          playing.scrubbing = false;
+          if(scrubT != null && playing.index === segRef.index) seekSegment(segRef, scrubT);
+          scrubT = null;
+        }
+        trackEl.addEventListener('pointerup', endScrub);
+        trackEl.addEventListener('pointercancel', endScrub);
+      })(seg, prog.querySelector('.sp-track'));
 
       row.appendChild(num);
       row.appendChild(main);
