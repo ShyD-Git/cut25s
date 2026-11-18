@@ -272,11 +272,11 @@ button{font-family:inherit}
 .mp-time{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted);white-space:nowrap}
 
 /* Custom segment boundaries */
-.count-row{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
-.count-label{font-weight:700;font-size:14px}
+.count-row{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.count-label{font-weight:700;font-size:13.5px}
 .count-stepper{display:flex;align-items:stretch;border:1.5px solid var(--line);border-radius:999px;overflow:hidden}
-.count-btn{width:44px;min-height:44px;border:none;background:var(--surface-2);color:var(--text);font-size:18px;font-weight:800;cursor:pointer;line-height:1}
-.count-input{width:58px;border:none;text-align:center;font-family:"JetBrains Mono",monospace;font-size:16px;font-weight:700;background:var(--surface);color:var(--text);-moz-appearance:textfield;appearance:textfield;padding:0}
+.count-btn{width:36px;min-height:36px;border:none;background:var(--surface-2);color:var(--text);font-size:16px;font-weight:800;cursor:pointer;line-height:1;padding:0}
+.count-input{width:44px;border:none;text-align:center;font-family:"JetBrains Mono",monospace;font-size:15px;font-weight:700;background:var(--surface);color:var(--text);-moz-appearance:textfield;appearance:textfield;padding:0}
 .count-input::-webkit-outer-spin-button,.count-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .count-hint{color:var(--muted);font-size:12.5px}
 .sd-list{display:grid;gap:10px;margin-top:14px}
@@ -293,6 +293,10 @@ button{font-family:inherit}
 .sd-input[readonly]{opacity:.72;border-style:dashed}
 .sd-input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
 .sd-arrow{padding-bottom:13px;color:var(--muted);font-weight:700;flex:0 0 auto}
+.sd-durrow{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.sd-dur-label{font-size:12px;color:var(--muted);font-weight:700}
+.sd-durval{width:66px}
+.sd-dur-unit{font-size:12.5px;color:var(--muted);font-weight:600}
 .sd-note{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
 .sd-msg{display:none;margin:10px 0 0;color:#b91c1c;font-size:13px;font-weight:600;line-height:1.45}
 .sd-msg.show{display:block}
@@ -390,7 +394,7 @@ button{font-family:inherit}
         <button class="btn btn-outline btn-sm" id="equalBtn" type="button">↔ Chia đều theo độ dài bài</button>
         <button class="btn btn-accent btn-sm" id="applySegBtn" type="button">✓ Áp dụng mốc giờ</button>
       </div>
-      <p class="dur-hint">Anh nhập <b>giờ kết thúc</b> cho từng đoạn theo dạng <b>00:00:25,00</b> (giờ:phút:giây,phần trăm giây). Đoạn sau <b>tự bắt đầu sau đoạn trước 0,01s</b> — ví dụ đoạn 1 kết thúc <b>00:00:25,00</b> thì đoạn 2 tự bắt đầu <b>00:00:25,01</b>, cứ thế cho các đoạn tiếp theo. Chọn file xong trang tự chia đều 3 đoạn trước để Anh sửa lại mốc giờ theo ý.</p>
+      <p class="dur-hint">Anh nhập <b>giờ kết thúc</b> cho từng đoạn theo dạng <b>00:00:25,00</b> (giờ:phút:giây,phần trăm giây), hoặc chỉnh <b>ô Độ dài</b> ngay dưới mỗi đoạn: gõ thẳng số giây, hoặc bấm nút <b>− / +</b> để giảm / tăng độ dài đoạn đó từng <b>1 giây</b>. Đoạn sau <b>tự bắt đầu sau đoạn trước 0,01s</b> — ví dụ đoạn 1 kết thúc <b>00:00:25,00</b> thì đoạn 2 tự bắt đầu <b>00:00:25,01</b>, cứ thế cho các đoạn tiếp theo. Chọn file xong trang tự chia đều 3 đoạn trước để Anh sửa lại mốc giờ theo ý.</p>
     </div>
   </section>
 
@@ -505,7 +509,7 @@ button{font-family:inherit}
   </div>
   <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra đúng độ dài từng mẫu âm thanh nên đưa vào CapCut không bị dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V5 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V7 · 18/11/2026</p>
   </footer>
 </div>
 
@@ -804,6 +808,14 @@ button{font-family:inherit}
         row.className = 'sd-row';
         var endVal = (segEnds[i] != null && isFinite(segEnds[i])) ? formatHMS(segEnds[i]) : '';
         var dur = (segEnds[i] != null && isFinite(segEnds[i])) ? Math.round((segEnds[i] - starts[i]) * 100) / 100 : null;
+        var durVal = (dur != null && dur > 0) ? dur.toFixed(2).replace('.', ',') : '';
+        var durHtml =
+          '<div class="sd-durrow"><span class="sd-dur-label">Độ dài đoạn</span>' +
+          '<div class="count-stepper">' +
+            '<button class="count-btn sd-dminus" type="button" aria-label="Giảm độ dài đoạn ' + (i + 1) + ' đi 1 giây">−</button>' +
+            '<input class="count-input sd-durval" type="text" inputmode="decimal" value="' + durVal + '" autocomplete="off" aria-label="Độ dài đoạn ' + (i + 1) + ' tính bằng giây">' +
+            '<button class="count-btn sd-dplus" type="button" aria-label="Tăng độ dài đoạn ' + (i + 1) + ' thêm 1 giây">＋</button>' +
+          '</div><span class="sd-dur-unit">giây</span></div>';
         row.innerHTML =
           '<div class="sd-head"><span class="sd-num">' + (i + 1) + '</span><strong>Đoạn ' + (i + 1) + '</strong>' +
           '<span class="sd-dur">' + (dur != null && dur > 0 ? 'dài ' + dur.toFixed(2).replace('.', ',') + ' giây' : 'chưa đủ mốc giờ') + '</span></div>' +
@@ -812,6 +824,7 @@ button{font-family:inherit}
             '<span class="sd-arrow">→</span>' +
             '<label class="sd-field"><span>Kết thúc</span><input class="sd-input sd-end" type="text" value="' + endVal + '" placeholder="00:00:25,00" autocomplete="off" aria-label="Giờ kết thúc đoạn ' + (i + 1) + '"></label>' +
           '</div>' +
+          durHtml +
           (i === 0
             ? '<p class="sd-note">Đoạn 1 bắt đầu ở đây — Anh sửa được ô bắt đầu này.</p>'
             : '<p class="sd-note">Tự động = đoạn ' + i + ' kết thúc + 0,01s.</p>');
@@ -845,11 +858,66 @@ button{font-family:inherit}
           var durEl = row.querySelector('.sd-dur');
           var d2 = Math.round((v - starts[i]) * 100) / 100;
           if(durEl) durEl.textContent = d2 > 0 ? 'dài ' + d2.toFixed(2).replace('.', ',') + ' giây' : 'kết thúc phải sau bắt đầu';
+          var dv = row.querySelector('.sd-durval');
+          if(dv) dv.value = d2 > 0 ? d2.toFixed(2).replace('.', ',') : '';
         });
         endInput.addEventListener('change', function(){ applySegDefs(true); });
         endInput.addEventListener('keydown', function(e){
           if(e.key === 'Enter'){ e.preventDefault(); applySegDefs(true); }
         });
+        // Duration field + −/+ buttons: typing a length (in seconds) or
+        // stepping ±1s moves this segment's end to start + length; the
+        // next segment's start chains at that end + 0,01s automatically.
+        function setSegDuration(newDur){
+          newDur = Math.round(newDur * 100) / 100;
+          if(!(newDur > 0)){
+            segDefError('Độ dài đoạn ' + (i + 1) + ' phải lớn hơn 0 giây nhé Anh.');
+            renderSegDefs();
+            return;
+          }
+          var ne = Math.round((starts[i] + newDur) * 100) / 100;
+          if(currentBuffer && ne > currentBuffer.duration) ne = Math.round(currentBuffer.duration * 100) / 100;
+          if(!(ne > starts[i])){
+            segDefError('Đoạn ' + (i + 1) + ' đã chạm cuối bài — không kéo dài thêm được nữa nhé Anh.');
+            return;
+          }
+          segEnds[i] = ne;
+          segDefError('');
+          renderSegDefs();
+          if(currentBuffer) applySegDefs(false);
+        }
+        function currentDur(){
+          if(segEnds[i] == null || !isFinite(segEnds[i])) return null;
+          return Math.round((segEnds[i] - starts[i]) * 100) / 100;
+        }
+        var durInput = row.querySelector('.sd-durval');
+        var dMinus = row.querySelector('.sd-dminus');
+        var dPlus = row.querySelector('.sd-dplus');
+        if(dMinus) dMinus.addEventListener('click', function(){
+          var d = currentDur();
+          if(d == null) return;
+          setSegDuration(d - 1);
+        });
+        if(dPlus) dPlus.addEventListener('click', function(){
+          var d = currentDur();
+          if(d == null) return;
+          setSegDuration(d + 1);
+        });
+        if(durInput){
+          durInput.addEventListener('change', function(){
+            var raw = String(durInput.value).trim().replace(',', '.');
+            var v = parseFloat(raw);
+            if(raw === '' || isNaN(v)){
+              segDefError('Độ dài đoạn ' + (i + 1) + ' chưa đúng — Anh gõ số giây, ví dụ 25 hoặc 25,5 nhé.');
+              renderSegDefs();
+              return;
+            }
+            setSegDuration(v);
+          });
+          durInput.addEventListener('keydown', function(e){
+            if(e.key === 'Enter'){ e.preventDefault(); durInput.blur(); }
+          });
+        }
       })(i);
     }
   }
