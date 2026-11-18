@@ -198,8 +198,11 @@ button{font-family:inherit}
 .list{display:grid;gap:10px}
 .seg{
   background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;
-  display:flex;gap:12px;align-items:center;
+  display:flex;gap:12px;align-items:center;flex-wrap:wrap;
 }
+.seg-share-row{flex:1 0 100%;display:flex;margin-top:2px}
+.seg-share-btn{flex:1;min-height:46px}
+.seg-share-btn:disabled{opacity:.65;cursor:wait}
 .seg.now-playing{border-color:var(--accent);background:var(--accent-soft)}
 .seg-pos{
   width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:var(--text);color:var(--bg);
@@ -498,11 +501,11 @@ button{font-family:inherit}
   <div class="how">
     <div><b>1. Chọn nhạc &amp; nhập mốc giờ</b><p>Nghe thử bài gốc, tua tới mốc cần cắt rồi nhập giờ kết thúc cho từng đoạn — đoạn sau tự bắt đầu sau đoạn trước 0,01s.</p></div>
     <div><b>2. Xáo trộn, sắp xếp, xoá đoạn</b><p>Bấm xáo trộn ngẫu nhiên, bấm ▲ ▼ để tự tay dời từng đoạn, hoặc bấm ✕ trên đoạn không cần (ví dụ đoạn ở giữa) để loại nó khỏi bài ghép — thêm lại được bất cứ lúc nào.</p></div>
-    <div><b>3. Ghép &amp; lưu</b><p>Nghe thử bài ghép ngay trên trang (kéo thanh tua hoặc bấm −10s / +10s), ưng ý thì bấm Chia sẻ → “Lưu vào Tệp”.</p></div>
+    <div><b>3. Ghép &amp; lưu</b><p>Nghe thử bài ghép ngay trên trang (kéo thanh tua hoặc bấm −10s / +10s), ưng ý thì bấm Chia sẻ → “Lưu vào Tệp”. Cần lấy riêng 1 đoạn thì bấm nút “Chia sẻ đoạn N” ngay trên thẻ đoạn đó.</p></div>
   </div>
   <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra đúng độ dài từng mẫu âm thanh nên đưa vào CapCut không bị dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V4 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V5 · 18/11/2026</p>
   </footer>
 </div>
 
@@ -941,6 +944,15 @@ button{font-family:inherit}
   function refreshShareLabel(){
     shareMergedBtn.textContent = '⬆ Chia sẻ bài ghép (.' + outFormat + ')';
   }
+  function refreshSegShareLabels(){
+    if(!segmentList) return;
+    var btns = segmentList.querySelectorAll('.seg-share-btn');
+    for(var i=0;i<btns.length;i++){
+      if(btns[i].disabled) continue;
+      var idx = parseInt(btns[i].getAttribute('data-seg-share'), 10);
+      if(!isNaN(idx)) btns[i].textContent = '⬆ Chia sẻ đoạn ' + (idx + 1) + ' (.' + outFormat + ')';
+    }
+  }
   function setFormat(f){
     outFormat = f;
     fmtMp3Btn.classList.toggle('active', f==='mp3');
@@ -954,6 +966,7 @@ button{font-family:inherit}
       fmtHint.textContent = 'Đổi lúc nào cũng được, không cần cắt lại';
     }
     refreshShareLabel();
+    refreshSegShareLabels();
     refreshNamePreview();
   }
   fmtMp3Btn.addEventListener('click', function(){ setFormat('mp3'); });
@@ -1268,6 +1281,76 @@ button{font-family:inherit}
       }
     }
     return out;
+  }
+
+  // Extract a single segment into its own AudioBuffer (same floor()
+  // sample maths as the merged builder, so the exported length is exact).
+  function buildSegmentBuffer(seg){
+    var sr = currentBuffer.sampleRate;
+    var numCh = Math.min(2, currentBuffer.numberOfChannels);
+    var s = Math.floor(seg.start * sr);
+    var e = Math.min(currentBuffer.length, Math.floor(seg.end * sr));
+    var count = Math.max(0, e - s);
+    var out = audioCtx.createBuffer(numCh, count, sr);
+    for(var ch=0; ch<numCh; ch++){
+      var srcData = currentBuffer.getChannelData(ch);
+      var dest = out.getChannelData(ch);
+      dest.set(srcData.subarray(s, e));
+    }
+    return out;
+  }
+  async function shareSegment(segIdx, btn){
+    if(!currentBuffer) return;
+    var seg = segments[segIdx];
+    if(!seg || !btn) return;
+    ensureCtx();
+    stopAllPlayback();
+    hideStatus();
+    var originalLabel = '⬆ Chia sẻ đoạn ' + (segIdx + 1) + ' (.' + outFormat + ')';
+    btn.disabled = true;
+    try{
+      btn.textContent = 'Đang cắt đoạn ' + (segIdx + 1) + '…';
+      await nextFrame();
+      var segBuffer = buildSegmentBuffer(seg);
+      var encBlob, encExt;
+      if(outFormat === 'mp3'){
+        var mp3Blob = await bufferToMp3BlobAsync(segBuffer, function(f){
+          btn.textContent = 'Đang nén MP3 đoạn ' + (segIdx + 1) + ' ' + Math.round(f * 100) + '%…';
+        });
+        encBlob = mp3Blob; encExt = 'mp3';
+      } else {
+        var wavBlob = await bufferToWavBlobAsync(segBuffer, function(f){
+          btn.textContent = 'Đang tạo WAV đoạn ' + (segIdx + 1) + ' ' + Math.round(f * 100) + '%…';
+        });
+        encBlob = wavBlob; encExt = 'wav';
+      }
+      btn.textContent = 'Đang mở chia sẻ đoạn ' + (segIdx + 1) + '…';
+      await nextFrame();
+      var prefix = cleanPrefix(namePrefixInput ? namePrefixInput.value : '');
+      var name = (prefix ? prefix + '-' : '') + 'doan-' + pad(segIdx + 1) + '.' + encExt;
+      var file = new File([encBlob], name, { type: encBlob.type });
+      if(canShareFiles([file])){
+        try{
+          await navigator.share({ files: [file] });
+        }catch(err){
+          if(err && err.name === 'AbortError'){
+            // User dismissed the sheet.
+          } else {
+            fallbackDownload(encBlob, name);
+          }
+        }
+      } else {
+        fallbackDownload(encBlob, name);
+      }
+    }catch(err){
+      console.error(err);
+      showStatus(err && err.message ? err.message : 'Không tạo được file đoạn này — Anh thử lại nhé.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+      // outFormat may have changed while encoding — refresh to current.
+      refreshSegShareLabels();
+    }
   }
 
   // ---------- Sharing ----------
@@ -1717,6 +1800,19 @@ button{font-family:inherit}
       actions.appendChild(moveBtns);
       actions.appendChild(delBtn);
 
+      var shareRow = document.createElement('div');
+      shareRow.className = 'seg-share-row';
+      var shareSegBtn = document.createElement('button');
+      shareSegBtn.className = 'btn btn-accent seg-share-btn';
+      shareSegBtn.type = 'button';
+      shareSegBtn.setAttribute('data-seg-share', String(seg.index));
+      shareSegBtn.textContent = '⬆ Chia sẻ đoạn ' + (seg.index + 1) + ' (.' + outFormat + ')';
+      shareSegBtn.setAttribute('aria-label', 'Chia sẻ riêng đoạn gốc ' + (seg.index + 1));
+      (function(btnRef, idx){
+        btnRef.addEventListener('click', function(){ shareSegment(idx, btnRef); });
+      })(shareSegBtn, seg.index);
+      shareRow.appendChild(shareSegBtn);
+
       var prog = document.createElement('div');
       prog.className='seg-progress';
       prog.innerHTML = '<div class="sp-track" role="slider" aria-label="Kéo núm tròn để tua đoạn này"><i></i><b class="sp-knob"></b></div><span class="sp-time">0:00 / '+fmtTotal(seg.duration)+'</span>';
@@ -1758,6 +1854,7 @@ button{font-family:inherit}
       row.appendChild(main);
       row.appendChild(badge);
       row.appendChild(actions);
+      row.appendChild(shareRow);
       row.appendChild(prog);
       segmentList.appendChild(row);
     });
