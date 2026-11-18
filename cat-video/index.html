@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Cắt Video — Cắt Shorts Thành Nhiều Đoạn Nhỏ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef6fc;
+  --surface:#ffffff;
+  --surface-2:#e3f0f9;
+  --line:#cfe3f1;
+  --text:#0b2236;
+  --muted:#5d7d94;
+  --accent:#0284c7;
+  --accent-strong:#0369a1;
+  --accent-soft:#e0f2fe;
+  --warn:#fff7e6;
+  --radius:16px;
+  --shadow:0 8px 30px rgba(11,34,54,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#071522;
+    --surface:#0d2133;
+    --surface-2:#14304a;
+    --line:#1f425f;
+    --text:#e8f4fc;
+    --muted:#8fb0c7;
+    --accent:#38bdf8;
+    --accent-strong:#7dd3fc;
+    --accent-soft:#0b324e;
+    --warn:#2a2110;
+    --shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Be Vietnam Pro",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent)}
+button{font-family:inherit}
+button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2.25rem; }
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+@media(min-width:640px){.wrap{padding:32px 24px 56px}}
+
+/* Header */
+.top{margin-bottom:20px}
+.top h1{font-size:32px;line-height:1.05;letter-spacing:-.02em;margin:0;font-weight:800}
+.top h1 span{color:var(--accent)}
+.top p{margin:10px 0 0;color:var(--muted);font-size:15px;max-width:560px}
+.vibe{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
+.vibe b{color:var(--accent);font-weight:700}
+.vibe-switch{position:relative;display:inline-block}
+.vibe-btn{
+  appearance:none;background:none;border:none;padding:0;margin:0;min-height:0;
+  font:inherit;font-weight:700;color:var(--accent);cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.vibe-btn .chev{font-size:9px;line-height:1;transition:transform .15s ease}
+.vibe-btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.vibe-menu{
+  position:absolute;top:calc(100% + 8px);left:0;z-index:60;min-width:230px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);padding:6px;display:none;
+}
+.vibe-menu.open{display:block}
+.vibe-menu a,.vibe-menu .vibe-current{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+  font-size:14px;font-weight:600;color:var(--text);text-decoration:none;line-height:1.3;
+}
+.vibe-menu a:hover,.vibe-menu a:focus-visible{background:var(--accent-soft)}
+.vibe-menu .vibe-current{color:var(--muted);cursor:default}
+.vibe-menu .vm-ico{font-size:16px;line-height:1;flex:0 0 auto}
+.vibe-menu .vm-tag{margin-left:auto;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);background:var(--surface);border-radius:999px;font-size:12.5px;font-weight:600}
+.pill b{color:var(--accent)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
+
+/* Dropzone */
+.drop{
+  background:var(--surface);
+  border:1.5px dashed #8ec3e5;
+  border-radius:20px;
+  padding:28px 20px;
+  text-align:center;
+  box-shadow:var(--shadow);
+  transition:.15s;
+  cursor:pointer;
+}
+.drop.drag{border-color:var(--accent);background:var(--accent-soft);transform:scale(.995)}
+.drop-icon{
+  width:56px;height:56px;margin:0 auto 14px;border-radius:16px;background:var(--accent);color:white;
+  display:grid;place-items:center;font-size:28px;line-height:1;
+}
+.drop h2{margin:0;font-size:18px;font-weight:700}
+.drop p{margin:6px 0 0;color:var(--muted);font-size:13.5px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:44px;padding:0 18px;border-radius:999px;border:1px solid transparent;
+  font-weight:700;font-size:14.5px;cursor:pointer;text-decoration:none;white-space:nowrap;
+}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+@media(prefers-color-scheme: dark){.btn-primary{background:#e8f4fc;color:#071522;border-color:#e8f4fc}}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-accent:hover{background:var(--accent-strong)}
+.btn-outline{background:transparent;color:var(--text);border-color:var(--line)}
+.btn-outline:hover{border-color:var(--text)}
+.btn-sm{min-height:40px;padding:0 14px;font-size:13.5px;border-radius:999px}
+.btn:disabled{opacity:.55;cursor:wait}
+.drop .btn{margin-top:16px}
+.formats{margin-top:14px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* Status */
+.status{display:none;margin-top:14px;padding:12px 14px;border-radius:12px;font-size:13.5px;line-height:1.45}
+.status.show{display:block}
+.status.loading{background:var(--accent-soft);border:1px solid var(--line)}
+.status.error{background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
+@media(prefers-color-scheme: dark){.status.error{background:#2b1414;border-color:#4a1f1f;color:#fca5a5}}
+.status.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
+@media(prefers-color-scheme: dark){.status.ok{background:#0b2e22;border-color:#14532d;color:#6ee7b7}}
+
+/* Progress */
+.progress{display:none;margin-top:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.progress.show{display:block}
+.progress-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.progress-head span:first-child{font-size:13.5px;font-weight:600;line-height:1.4}
+.progress-pct{font-family:"JetBrains Mono",monospace;font-size:20px;font-weight:600;color:var(--accent);line-height:1;white-space:nowrap}
+.progress-track{height:10px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-top:10px}
+.progress-track i{display:block;height:100%;background:var(--accent);width:0%;border-radius:999px;transition:width .18s ease}
+.work-hint{margin:8px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
+
+/* Cards */
+.card{
+  margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;
+  box-shadow:var(--shadow);
+}
+.file-card,.segdef-card,.segs-card{display:none}
+.file-card.show,.segdef-card.show,.segs-card.show{display:block}
+.file-head{display:flex;gap:12px;align-items:flex-start}
+.file-thumb{width:48px;height:48px;flex:0 0 48px;border-radius:12px;background:var(--accent-soft);display:grid;place-items:center;font-size:22px}
+.file-head h3{margin:0;font-size:15px;line-height:1.3;word-break:break-word}
+.file-head p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.file-head .spacer{flex:1}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+@media(max-width:520px){.stats{gap:8px}}
+.stat{background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.stat label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.stat strong{display:block;margin-top:2px;font-size:15px;font-family:"JetBrains Mono",monospace}
+
+/* Player */
+.player-wrap{margin-top:14px;background:#000;border-radius:14px;overflow:hidden}
+.player-wrap video{display:block;width:100%;max-height:68vh;object-fit:contain;background:#000}
+.timeline{display:none;margin-top:12px}
+.timeline.show{display:block}
+.timeline label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px}
+.tl-bar{display:flex;gap:2px;height:30px;border-radius:8px;overflow:hidden}
+.tl-seg{
+  border:none;cursor:pointer;color:#fff;font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;min-width:0;padding:0 2px;overflow:hidden;white-space:nowrap;
+}
+.tl-seg:nth-child(odd){background:var(--accent)}
+.tl-seg:nth-child(even){background:var(--accent-strong)}
+.tl-rest{background:var(--surface-2);flex:1}
+
+/* Section heads inside cards */
+.outfmt{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.outfmt:first-child{margin-top:0;border-top:none;padding-top:0}
+.outfmt-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.outfmt-head label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.outfmt-head span{font-size:12px;color:var(--muted)}
+.dur-hint{margin:8px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
+.dur-hint b{color:var(--text)}
+
+/* Count stepper */
+.count-row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.count-label{font-size:13px;font-weight:700}
+.count-stepper{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:4px}
+.count-btn{
+  width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--text);
+  font-size:18px;font-weight:700;cursor:pointer;display:grid;place-items:center;line-height:1;
+}
+.count-btn:active{border-color:var(--accent);color:var(--accent)}
+.count-input{
+  width:56px;min-height:38px;text-align:center;border:none;background:var(--surface);border-radius:10px;
+  font-family:"JetBrains Mono",monospace;font-size:15px;font-weight:600;color:var(--text);
+}
+.count-hint{color:var(--muted);font-size:12.5px}
+
+/* Segment definition rows */
+.sd-list{display:grid;gap:10px;margin-top:14px}
+.sd-row{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface-2)}
+.sd-head{display:flex;align-items:center;gap:8px}
+.sd-num{width:26px;height:26px;flex:0 0 26px;border-radius:8px;background:var(--text);color:var(--bg);display:grid;place-items:center;font-family:"JetBrains Mono",monospace;font-size:12.5px;font-weight:700}
+@media(prefers-color-scheme: dark){.sd-num{background:#e8f4fc;color:#0b2236}}
+.sd-head strong{font-size:14px}
+.sd-dur{margin-left:auto;color:var(--muted);font-size:12px;font-family:"JetBrains Mono",monospace;text-align:right}
+.sd-times{display:flex;align-items:flex-end;gap:8px;margin-top:10px}
+.sd-field{flex:1;min-width:0;display:grid;gap:4px}
+.sd-field>span{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.sd-input{min-height:46px;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);font-family:"JetBrains Mono",monospace;font-size:13.5px;font-weight:600;width:100%;min-width:0}
+.sd-input[readonly]{opacity:.72;border-style:dashed}
+.sd-input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.sd-arrow{padding-bottom:13px;color:var(--muted);font-weight:700;flex:0 0 auto}
+.sd-durrow{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.sd-dur-label{font-size:12px;color:var(--muted);font-weight:700}
+.sd-durval{width:66px}
+.sd-dur-unit{font-size:12.5px;color:var(--muted);font-weight:600}
+.sd-chips{display:inline-flex;gap:6px;flex-wrap:wrap}
+.sd-chip{min-height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);font-weight:700;font-size:13px;cursor:pointer;font-family:"JetBrains Mono",monospace}
+.sd-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.sd-chip:active{border-color:var(--accent);color:var(--accent)}
+.sd-chip.active:active{color:#fff}
+.sd-note{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
+.sd-msg{display:none;margin:10px 0 0;color:#b91c1c;font-size:13px;font-weight:600;line-height:1.45}
+.sd-msg.show{display:block}
+@media(prefers-color-scheme: dark){.sd-msg{color:#fca5a5}}
+.sd-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.sd-actions .btn{flex:1 1 180px}
+.mark-btn{margin-top:10px}
+
+/* Applied segments */
+.list{display:grid;gap:10px;margin-top:12px}
+.seg{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;
+  display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+}
+.seg.now-playing{border-color:var(--accent);background:var(--accent-soft)}
+.seg-pos{
+  width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:var(--text);color:var(--bg);
+  display:grid;place-items:center;font-weight:800;font-size:14px;font-family:"JetBrains Mono",monospace;
+}
+@media(prefers-color-scheme: dark){.seg-pos{background:#e8f4fc;color:#0b2236}}
+.seg-main{flex:1;min-width:0}
+.seg-main strong{display:block;font-size:14.5px}
+.seg-main span{display:block;color:var(--muted);font-size:12.5px;font-family:"JetBrains Mono",monospace;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg-actions{display:flex;gap:8px;flex-shrink:0;align-items:center;flex-wrap:wrap}
+.seg-result{flex:1 0 100%;display:none;border-top:1px solid var(--line);padding-top:12px;margin-top:2px}
+.seg-result.show{display:block}
+.seg-result video{display:block;width:100%;max-height:50vh;border-radius:10px;background:#000;object-fit:contain}
+.seg-result-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.seg-result-meta span{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--muted);word-break:break-all}
+.seg-result-meta .grow{flex:1}
+
+/* Rename */
+.rename-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:stretch}
+.rename-input{
+  flex:1 1 200px;min-height:46px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14.5px;font-weight:600;min-width:0;
+}
+.rename-input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.rename-input::placeholder{font-weight:400;color:var(--muted)}
+.name-preview{
+  display:flex;align-items:center;padding:8px 12px;border-radius:12px;background:var(--surface-2);
+  font-family:"JetBrains Mono",monospace;font-size:12.5px;font-weight:600;word-break:break-all;
+}
+.export-all-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.export-all-row .btn{flex:1 1 200px}
+.note{margin-top:14px;color:var(--muted);font-size:12.5px;text-align:center}
+.foot{margin-top:26px;text-align:center}
+.foot .upd{margin:0;font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.03em}
+.rec-pipe{position:absolute;left:-9999px;top:0;width:4px;height:4px;overflow:hidden;opacity:.01;pointer-events:none}
+
+@media(max-width:560px){
+  .seg-main{flex-basis:calc(100% - 54px)}
+  .seg-actions{width:100%}
+  .seg-actions .btn{flex:1}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Cắt <span>video</span></h1>
+    <p class="vibe">Vibe Code by <span class="vibe-switch"><button class="vibe-btn" id="vibeBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="vibeMenu">Dương Đăng <span class="chev" aria-hidden="true">▾</span></button><span class="vibe-menu" id="vibeMenu" role="menu"><a href="https://shyd-git.github.io/cut25s/" role="menuitem"><span class="vm-ico" aria-hidden="true">🎵</span>Cắt Nhạc 25s</a><a href="https://shyd-git.github.io/cut25s/xao-tron/" role="menuitem"><span class="vm-ico" aria-hidden="true">🔀</span>Xáo Trộn Nhạc</a><span class="vibe-current" role="menuitem" aria-current="page"><span class="vm-ico" aria-hidden="true">🎬</span>Cắt Video<span class="vm-tag">Đang mở</span></span></span></span></p>
+    <p>Chọn 1 file video Shorts đã tải về máy — trang cắt lấy <b>vài đoạn nhỏ vài giây</b> theo mốc giờ Anh tự nhập, mỗi đoạn xuất thành <b>1 file video riêng, giữ nguyên tiếng</b> để lưu về máy hoặc đưa vào CapCut.</p>
+    <div class="meta-row">
+      <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
+      <span class="pill">Chia <b id="pillSeg">3 đoạn</b></span>
+      <span class="pill">Xuất <b>MP4</b> từng đoạn</span>
+      <span class="pill">Lưu qua <b>menu Chia sẻ</b></span>
+    </div>
+  </header>
+
+  <!-- Drop zone -->
+  <div class="drop" id="dropZone" role="button" tabindex="0" aria-label="Chọn file video">
+    <div class="drop-icon">🎬</div>
+    <h2>Kéo thả file video vào đây</h2>
+    <p>hoặc bấm nút bên dưới để chọn file</p>
+    <button class="btn btn-accent" id="pickBtn" type="button">＋ Chọn file video</button>
+    <div class="formats">MP4 · MOV · WebM — file Shorts tải về máy</div>
+  </div>
+  <input type="file" id="fileInput" accept="video/*" hidden />
+
+  <div class="status" id="statusBox"></div>
+
+  <!-- File + player -->
+  <section class="card file-card" id="fileCard" aria-live="polite">
+    <div class="file-head">
+      <div class="file-thumb">🎞️</div>
+      <div style="min-width:0">
+        <h3 id="fileName">—</h3>
+        <p id="fileMeta">—</p>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-outline btn-sm" id="resetBtn" type="button">Đổi file khác</button>
+    </div>
+    <div class="player-wrap">
+      <video id="mainVideo" controls playsinline preload="metadata"></video>
+    </div>
+    <div class="timeline" id="timeline">
+      <label>Các đoạn đã áp dụng — chạm để nhảy tới đoạn</label>
+      <div class="tl-bar" id="tlBar"></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><label>Tổng dài</label><strong id="statDuration">0:00</strong></div>
+      <div class="stat"><label>Kích thước</label><strong id="statSize">—</strong></div>
+      <div class="stat"><label>Dung lượng</label><strong id="statBytes">—</strong></div>
+    </div>
+  </section>
+
+  <!-- Segment boundaries -->
+  <section class="card segdef-card" id="segDefCard" aria-label="Chia đoạn theo mốc thời gian">
+    <div class="outfmt">
+      <div class="outfmt-head">
+        <label>Chia đoạn theo mốc giờ</label>
+        <span>Chỉ gõ số — trang tự chèn : và ,</span>
+      </div>
+      <div class="count-row">
+        <span class="count-label">Số đoạn</span>
+        <div class="count-stepper">
+          <button class="count-btn" id="segMinus" type="button" aria-label="Giảm số đoạn">−</button>
+          <input class="count-input" id="segCount" type="number" min="1" max="10" step="1" value="3" inputmode="numeric" aria-label="Số đoạn" />
+          <button class="count-btn" id="segPlus" type="button" aria-label="Tăng số đoạn">＋</button>
+        </div>
+        <span class="count-hint">Mặc định 3 đoạn · đổi được 1–10 đoạn</span>
+      </div>
+      <div class="sd-list" id="segDefList"></div>
+      <p class="sd-msg" id="segDefMsg" role="alert"></p>
+      <div class="sd-actions">
+        <button class="btn btn-outline btn-sm" id="equalBtn" type="button">↔ Chia đều theo độ dài video</button>
+        <button class="btn btn-accent btn-sm" id="applySegBtn" type="button">✓ Áp dụng mốc giờ</button>
+      </div>
+      <p class="dur-hint">Anh nhập <b>giờ kết thúc</b> cho từng đoạn: <b>chỉ cần gõ số liên tục</b>, trang <b>tự chèn dấu : và ,</b> — ví dụ gõ <b>001500</b> là thành <b>00:00:15,00</b> (giờ:phút:giây,phần trăm giây). Hoặc chỉnh <b>ô Độ dài</b> ngay dưới mỗi đoạn: gõ thẳng số giây, bấm <b>− / +</b> từng 1 giây, hoặc bấm chip nhanh <b>5s / 10s / 15s</b>. Đoạn sau <b>tự bắt đầu ngay tại điểm đoạn trước kết thúc</b>. Đang xem video mà thấy đoạn hay, bấm nút <b>⏱ Lấy mốc theo video</b> ở đoạn đang chỉnh để chốt giờ kết thúc đúng vị trí đang phát. Chọn file xong trang tự chia đều 3 đoạn trước để Anh sửa lại mốc giờ theo ý.</p>
+    </div>
+    <div class="outfmt">
+      <div class="outfmt-head">
+        <label>Tên file xuất</label>
+        <span>Đổi lúc nào cũng được, không cần cắt lại</span>
+      </div>
+      <div class="rename-row">
+        <input class="rename-input" id="namePrefix" type="text" maxlength="40" placeholder="Để trống = cat-video" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <div class="name-preview" id="namePreview">cat-video-doan-1.mp4</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Applied segments -->
+  <section class="card segs-card" id="segsCard" aria-label="Danh sách đoạn">
+    <div class="outfmt-head">
+      <label>Danh sách đoạn</label>
+      <span id="segsSub">Bấm Xuất đoạn để tạo file video cho từng đoạn</span>
+    </div>
+    <div class="progress" id="workProgress" role="progressbar" aria-label="Tiến trình xuất video" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="progress-head"><span id="workLabel">Đang xuất đoạn…</span><span class="progress-pct" id="workPct">0%</span></div>
+      <div class="progress-track"><i id="workBar"></i></div>
+      <p class="work-hint">Xuất video chạy theo <b>thời gian thực</b>: đoạn 5 giây mất khoảng 5 giây. Giữ trang mở, đừng khoá màn hình và đừng chuyển app trong lúc xuất nhé Anh.</p>
+    </div>
+    <div class="list" id="segmentList"></div>
+    <div class="export-all-row">
+      <button class="btn btn-primary" id="exportAllBtn" type="button">⬇ Xuất tất cả các đoạn</button>
+      <button class="btn btn-outline" id="stopExportBtn" type="button" hidden>■ Dừng xuất</button>
+    </div>
+    <p class="dur-hint">File xuất ra là <b>MP4</b> khi trình duyệt hỗ trợ; nếu không, trang tự xuất <b>WebM</b>. Bấm <b>Chia sẻ</b> ở từng đoạn để lưu vào Ảnh / Tệp qua menu Chia sẻ của máy.</p>
+  </section>
+
+  <p class="note">Trang chỉ đọc file Anh chọn ngay trên máy — video không được tải lên đâu cả.</p>
+  <footer class="foot">
+    <p class="upd">CV-V1</p>
+  </footer>
+</div>
+
+<!-- Hidden recording pipeline -->
+<div class="rec-pipe" aria-hidden="true">
+  <video id="recVideo" playsinline preload="auto"></video>
+  <canvas id="recCanvas"></canvas>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- Helpers ---------- */
+function $(id){ return document.getElementById(id); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function roundCs(sec){ return Math.round(sec * 100) / 100; }
+
+/* Format seconds as HH:MM:SS,CC (family style) */
+function fmtTC(sec){
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  var cs = Math.round(sec * 100);
+  var h = Math.floor(cs / 360000);
+  var m = Math.floor((cs % 360000) / 6000);
+  var s = Math.floor((cs % 6000) / 100);
+  var c = cs % 100;
+  return pad2(h) + ':' + pad2(m) + ':' + pad2(s) + ',' + pad2(c);
+}
+/* Short m:ss for stats */
+function fmtShort(sec){
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  var t = Math.round(sec);
+  var m = Math.floor(t / 60), s = t % 60;
+  var h = Math.floor(m / 60);
+  if (h > 0) return h + ':' + pad2(m % 60) + ':' + pad2(s);
+  return m + ':' + pad2(s);
+}
+function fmtDurVi(sec){
+  return (Math.round(sec * 100) / 100).toFixed(2).replace('.', ',');
+}
+function fmtBytes(b){
+  if (!b && b !== 0) return '—';
+  if (b < 1024) return b + ' B';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1).replace('.', ',') + ' KB';
+  return (b / (1024 * 1024)).toFixed(2).replace('.', ',') + ' MB';
+}
+/* Digits "HHMMSSCC" <-> seconds */
+function digitsToSeconds(d){
+  d = (d || '').padStart(8, '0');
+  var h = +d.slice(0, 2), m = +d.slice(2, 4), s = +d.slice(4, 6), c = +d.slice(6, 8);
+  return h * 3600 + m * 60 + s + c / 100;
+}
+function secondsToDigits(sec){
+  var cs = Math.max(0, Math.round(sec * 100));
+  var h = Math.floor(cs / 360000), m = Math.floor((cs % 360000) / 6000),
+      s = Math.floor((cs % 6000) / 100), c = cs % 100;
+  return pad2(Math.min(h, 99)) + pad2(m) + pad2(s) + pad2(c);
+}
+function formatDigits(d){
+  d = (d || '').padStart(8, '0');
+  return d.slice(0, 2) + ':' + d.slice(2, 4) + ':' + d.slice(4, 6) + ',' + d.slice(6, 8);
+}
+function sanitizePrefix(raw){
+  var p = (raw || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd').replace(/[^a-z0-9-_]+/g, '-').replace(/^-+|-+$/g, '');
+  return p || 'cat-video';
+}
+
+/* ---------- State ---------- */
+var state = {
+  file: null,
+  url: null,
+  duration: 0,
+  vw: 0, vh: 0,
+  segCount: 3,
+  draftEnds: [],        /* seconds, one end-time per segment */
+  segments: [],         /* applied [{start,end}] */
+  results: {},          /* idx -> {blob, url, name} */
+  exporting: false,
+  exportCancel: false,
+  previewUntil: null,
+  audioMode: null,      /* 'capture' | 'webaudio' | 'none' */
+  actx: null, aDest: null
+};
+
+var mainVideo = $('mainVideo');
+var recVideo = $('recVideo');
+var recCanvas = $('recCanvas');
+
+/* ---------- Status ---------- */
+function showStatus(msg, kind){
+  var box = $('statusBox');
+  box.textContent = msg;
+  box.className = 'status show ' + (kind || 'loading');
+}
+function hideStatus(){ $('statusBox').className = 'status'; }
+
+/* ---------- File loading ---------- */
+var dropZone = $('dropZone'), fileInput = $('fileInput');
+dropZone.addEventListener('click', function(e){
+  if (e.target !== $('pickBtn')) fileInput.click();
+});
+$('pickBtn').addEventListener('click', function(e){ e.stopPropagation(); fileInput.click(); });
+dropZone.addEventListener('keydown', function(e){
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+});
+['dragenter','dragover'].forEach(function(ev){
+  dropZone.addEventListener(ev, function(e){ e.preventDefault(); dropZone.classList.add('drag'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  dropZone.addEventListener(ev, function(e){ e.preventDefault(); dropZone.classList.remove('drag'); });
+});
+dropZone.addEventListener('drop', function(e){
+  var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+fileInput.addEventListener('change', function(){
+  if (fileInput.files && fileInput.files[0]) loadFile(fileInput.files[0]);
+  fileInput.value = '';
+});
+$('resetBtn').addEventListener('click', function(){ fileInput.click(); });
+
+function loadFile(file){
+  if (!/^video\//.test(file.type) && !/\.(mp4|mov|m4v|webm|mkv)$/i.test(file.name)) {
+    showStatus('File này không giống file video — Anh chọn lại file MP4 / MOV / WebM nhé.', 'error');
+    return;
+  }
+  stopExport();
+  if (state.url) URL.revokeObjectURL(state.url);
+  state.file = file;
+  state.url = URL.createObjectURL(file);
+  state.results = {};
+  state.segments = [];
+  state.audioMode = null;
+  if (state.actx) { try { state.actx.close(); } catch(e){} state.actx = null; state.aDest = null; }
+  showStatus('Đang đọc file video…', 'loading');
+
+  mainVideo.src = state.url;
+  recVideo.removeAttribute('src');
+  recVideo.load();
+
+  state.loadId = (state.loadId || 0) + 1;
+  var myLoad = state.loadId;
+  var gotMeta = false;
+  function onMeta(){
+    if (gotMeta || myLoad !== state.loadId) return;
+    gotMeta = true;
+    var d = mainVideo.duration;
+    if (!isFinite(d)) {
+      /* Some WebM files report Infinity until seeked far ahead */
+      var fix = function(){
+        mainVideo.removeEventListener('durationchange', fix);
+        if (myLoad === state.loadId) finishLoad(mainVideo.duration);
+      };
+      mainVideo.addEventListener('durationchange', fix);
+      try { mainVideo.currentTime = 1e7; } catch(e){ if (myLoad === state.loadId) finishLoad(0); }
+      setTimeout(function(){ if (myLoad === state.loadId && !state.duration) finishLoad(mainVideo.duration || 0); }, 2500);
+      return;
+    }
+    finishLoad(d);
+  }
+  mainVideo.addEventListener('loadedmetadata', onMeta);
+  mainVideo.addEventListener('error', function(){
+    showStatus('Trình duyệt không đọc được file video này. Anh thử file MP4 (H.264) nhé.', 'error');
+  });
+}
+
+function finishLoad(d){
+  if (!isFinite(d) || d <= 0) {
+    showStatus('Không đọc được độ dài của video này — Anh thử file MP4 khác nhé.', 'error');
+    return;
+  }
+  state.duration = roundCs(d);
+  state.vw = mainVideo.videoWidth || 0;
+  state.vh = mainVideo.videoHeight || 0;
+  try { mainVideo.currentTime = 0; } catch(e){}
+
+  $('fileName').textContent = state.file.name;
+  $('fileMeta').textContent = 'Video gốc · dài ' + fmtTC(state.duration);
+  $('statDuration').textContent = fmtShort(state.duration);
+  $('statSize').textContent = (state.vw && state.vh) ? (state.vw + '×' + state.vh) : '—';
+  $('statBytes').textContent = fmtBytes(state.file.size);
+  $('fileCard').classList.add('show');
+  $('segDefCard').classList.add('show');
+  $('segsCard').classList.add('show');
+
+  /* Default: split evenly into segCount parts, then apply */
+  equalSplit();
+  buildDraftRows();
+  applySegments(true);
+  hideStatus();
+  $('fileCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---------- Segment draft model ---------- */
+function segStart(i){ return i === 0 ? 0 : state.draftEnds[i - 1]; }
+
+function equalSplit(){
+  var n = state.segCount, d = state.duration, ends = [];
+  for (var i = 0; i < n; i++) {
+    ends.push(i === n - 1 ? d : roundCs(d * (i + 1) / n));
+  }
+  state.draftEnds = ends;
+}
+
+function setSegCount(n){
+  n = Math.max(1, Math.min(10, Math.round(n) || 1));
+  var old = state.draftEnds.slice();
+  var ends = [];
+  for (var i = 0; i < n; i++) {
+    if (i < old.length - 1 || (i === old.length - 1 && n <= old.length)) ends.push(old[i]);
+    else ends.push(null);
+  }
+  /* Fill gaps: even split of the remainder up to duration */
+  var lastKnown = 0, lastIdx = -1;
+  for (var j = 0; j < n; j++) {
+    if (ends[j] != null) { lastKnown = ends[j]; lastIdx = j; }
+  }
+  var missing = n - 1 - lastIdx;
+  for (var k = lastIdx + 1; k < n; k++) {
+    var step = (state.duration - lastKnown) / (missing + 1);
+    ends[k] = roundCs(lastKnown + step * (k - lastIdx));
+  }
+  ends[n - 1] = state.duration;
+  /* Keep strictly increasing */
+  for (var q = 1; q < n; q++) {
+    if (ends[q] <= ends[q - 1]) ends[q] = roundCs(ends[q - 1] + 0.5);
+  }
+  if (ends[n - 1] > state.duration) ends[n - 1] = state.duration;
+  state.segCount = n;
+  state.draftEnds = ends;
+  $('segCount').value = n;
+  $('pillSeg').textContent = n + ' đoạn';
+  buildDraftRows();
+}
+
+$('segMinus').addEventListener('click', function(){ setSegCount(state.segCount - 1); });
+$('segPlus').addEventListener('click', function(){ setSegCount(state.segCount + 1); });
+$('segCount').addEventListener('change', function(){ setSegCount(parseInt($('segCount').value, 10)); });
+$('equalBtn').addEventListener('click', function(){
+  if (!state.duration) return;
+  equalSplit();
+  buildDraftRows();
+  segDefError('');
+});
+
+/* ---------- Draft rows UI ---------- */
+function buildDraftRows(){
+  var list = $('segDefList');
+  list.innerHTML = '';
+  for (var i = 0; i < state.segCount; i++) {
+    list.appendChild(buildDraftRow(i));
+  }
+  refreshDraftRows();
+}
+
+function buildDraftRow(i){
+  var row = document.createElement('div');
+  row.className = 'sd-row';
+  row.setAttribute('data-idx', i);
+  row.innerHTML =
+    '<div class="sd-head">' +
+      '<span class="sd-num">' + (i + 1) + '</span>' +
+      '<strong>Đoạn ' + (i + 1) + '</strong>' +
+      '<span class="sd-dur"></span>' +
+    '</div>' +
+    '<div class="sd-times">' +
+      '<label class="sd-field"><span>Bắt đầu</span>' +
+        '<input class="sd-input sd-start" type="text" readonly tabindex="-1" aria-label="Giờ bắt đầu đoạn ' + (i + 1) + ' (tự động)">' +
+      '</label>' +
+      '<span class="sd-arrow">→</span>' +
+      '<label class="sd-field"><span>Kết thúc</span>' +
+        '<input class="sd-input sd-end" type="text" inputmode="numeric" autocomplete="off" aria-label="Giờ kết thúc đoạn ' + (i + 1) + '">' +
+      '</label>' +
+    '</div>' +
+    '<div class="sd-durrow"><span class="sd-dur-label">Độ dài đoạn</span>' +
+      '<div class="count-stepper">' +
+        '<button class="count-btn sd-dminus" type="button" aria-label="Giảm độ dài đoạn ' + (i + 1) + ' đi 1 giây">−</button>' +
+        '<input class="count-input sd-durval" type="text" inputmode="decimal" autocomplete="off" aria-label="Độ dài đoạn ' + (i + 1) + ' tính bằng giây">' +
+        '<button class="count-btn sd-dplus" type="button" aria-label="Tăng độ dài đoạn ' + (i + 1) + ' thêm 1 giây">＋</button>' +
+      '</div><span class="sd-dur-unit">giây</span>' +
+      '<span class="sd-chips">' +
+        '<button class="sd-chip" type="button" data-dur="5">5s</button>' +
+        '<button class="sd-chip" type="button" data-dur="10">10s</button>' +
+        '<button class="sd-chip" type="button" data-dur="15">15s</button>' +
+      '</span>' +
+    '</div>' +
+    '<button class="btn btn-outline btn-sm mark-btn" type="button">⏱ Lấy mốc theo video</button>' +
+    (i > 0 ? '<p class="sd-note">Tự động = đoạn ' + i + ' kết thúc.</p>' : '');
+
+  var endInput = row.querySelector('.sd-end');
+  endInput.value = formatDigits(secondsToDigits(state.draftEnds[i]));
+  endInput.setAttribute('data-digits', secondsToDigits(state.draftEnds[i]));
+  endInput.addEventListener('input', function(){
+    var digits = endInput.value.replace(/\D/g, '').slice(-8);
+    endInput.setAttribute('data-digits', digits);
+    endInput.value = formatDigits(digits);
+    state.draftEnds[i] = digitsToSeconds(digits);
+    refreshDraftRows(i);
+  });
+  endInput.addEventListener('blur', function(){
+    endInput.value = formatDigits(secondsToDigits(state.draftEnds[i]));
+    endInput.setAttribute('data-digits', secondsToDigits(state.draftEnds[i]));
+  });
+
+  var durInput = row.querySelector('.sd-durval');
+  durInput.addEventListener('change', function(){
+    var v = parseFloat(durInput.value.replace(',', '.'));
+    if (isFinite(v) && v > 0) setDraftDur(i, v);
+    else refreshDraftRows(i);
+  });
+  row.querySelector('.sd-dminus').addEventListener('click', function(){
+    setDraftDur(i, (state.draftEnds[i] - segStart(i)) - 1);
+  });
+  row.querySelector('.sd-dplus').addEventListener('click', function(){
+    setDraftDur(i, (state.draftEnds[i] - segStart(i)) + 1);
+  });
+  var chips = row.querySelectorAll('.sd-chip');
+  for (var c = 0; c < chips.length; c++) {
+    (function(chip){
+      chip.addEventListener('click', function(){
+        setDraftDur(i, parseFloat(chip.getAttribute('data-dur')));
+      });
+    })(chips[c]);
+  }
+  row.querySelector('.mark-btn').addEventListener('click', function(){
+    if (!state.duration) return;
+    var t = roundCs(mainVideo.currentTime || 0);
+    if (t <= segStart(i)) {
+      segDefError('Vị trí video đang ở ' + fmtTC(t) + ' — chưa qua điểm bắt đầu của đoạn ' + (i + 1) + ' (' + fmtTC(segStart(i)) + ') nên chưa đặt mốc kết thúc được nhé Anh.');
+      return;
+    }
+    state.draftEnds[i] = t;
+    segDefError('');
+    refreshDraftRows();
+  });
+  return row;
+}
+
+function setDraftDur(i, dur){
+  if (!(dur > 0)) dur = 0.5;
+  var end = roundCs(segStart(i) + dur);
+  if (state.duration && end > state.duration) end = state.duration;
+  state.draftEnds[i] = end;
+  refreshDraftRows();
+}
+
+/* Refresh read-only starts, durations, chip states. focusIdx keeps the
+   end input being typed in untouched. */
+function refreshDraftRows(focusIdx){
+  var rows = $('segDefList').children;
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var start = segStart(i), end = state.draftEnds[i];
+    var dur = end - start;
+    row.querySelector('.sd-start').value = fmtTC(start);
+    if (i !== focusIdx) {
+      var endInput = row.querySelector('.sd-end');
+      endInput.value = formatDigits(secondsToDigits(end));
+      endInput.setAttribute('data-digits', secondsToDigits(end));
+    }
+    row.querySelector('.sd-dur').textContent = 'dài ' + fmtDurVi(Math.max(0, dur)) + ' giây';
+    var durInput = row.querySelector('.sd-durval');
+    if (document.activeElement !== durInput) {
+      durInput.value = fmtDurVi(Math.max(0, dur));
+    }
+    var chips = row.querySelectorAll('.sd-chip');
+    for (var c = 0; c < chips.length; c++) {
+      var cd = parseFloat(chips[c].getAttribute('data-dur'));
+      chips[c].classList.toggle('active', Math.abs(dur - cd) < 0.005);
+    }
+  }
+}
+
+function segDefError(msg){
+  var el = $('segDefMsg');
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+}
+
+/* ---------- Apply ---------- */
+$('applySegBtn').addEventListener('click', function(){ applySegments(false); });
+
+function applySegments(silent){
+  if (!state.duration) { if (!silent) segDefError('Anh chọn file video trước đã nhé.'); return false; }
+  /* Compare in centiseconds against the rounded duration (XTN-V11 fix):
+     an end exactly equal to the video length is valid. */
+  var durCs = Math.round(state.duration * 100);
+  var prevCs = 0;
+  for (var i = 0; i < state.segCount; i++) {
+    var endCs = Math.round(state.draftEnds[i] * 100);
+    if (endCs <= prevCs) {
+      if (!silent) segDefError('Đoạn ' + (i + 1) + ' kết thúc ở ' + fmtTC(endCs / 100) + ' — phải sau điểm bắt đầu ' + fmtTC(prevCs / 100) + ' nhé Anh.');
+      return false;
+    }
+    if (endCs > durCs) {
+      if (!silent) segDefError('Đoạn ' + (i + 1) + ' kết thúc ở ' + fmtTC(endCs / 100) + ' nhưng video chỉ dài ' + fmtTC(durCs / 100) + ' nhé Anh.');
+      return false;
+    }
+    prevCs = endCs;
+  }
+  segDefError('');
+  state.segments = [];
+  for (var j = 0; j < state.segCount; j++) {
+    state.segments.push({ start: j === 0 ? 0 : state.draftEnds[j - 1], end: state.draftEnds[j] });
+  }
+  state.results = {};
+  renderSegments();
+  renderTimeline();
+  return true;
+}
+
+/* ---------- Applied segment list ---------- */
+function segFileName(i, ext){
+  return sanitizePrefix($('namePrefix').value) + '-doan-' + (i + 1) + '.' + ext;
+}
+$('namePrefix').addEventListener('input', function(){
+  $('namePreview').textContent = segFileName(0, currentExt());
+  /* Update existing result names display */
+  var rows = $('segmentList').children;
+  for (var i = 0; i < rows.length; i++) {
+    var meta = rows[i].querySelector('.seg-result-meta span');
+    var res = state.results[i];
+    if (meta && res) {
+      res.name = segFileName(i, res.ext);
+      meta.textContent = res.name + ' · ' + fmtBytes(res.blob.size);
+    }
+  }
+});
+function currentExt(){
+  var mime = pickMime();
+  return mime.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
+}
+$('namePreview').textContent = segFileName(0, currentExt());
+
+function renderSegments(){
+  var list = $('segmentList');
+  list.innerHTML = '';
+  state.segments.forEach(function(seg, i){
+    var el = document.createElement('div');
+    el.className = 'seg';
+    el.setAttribute('data-idx', i);
+    el.innerHTML =
+      '<div class="seg-pos">' + (i + 1) + '</div>' +
+      '<div class="seg-main">' +
+        '<strong>Đoạn ' + (i + 1) + '</strong>' +
+        '<span>' + fmtTC(seg.start) + ' → ' + fmtTC(seg.end) + ' · dài ' + fmtDurVi(seg.end - seg.start) + ' giây</span>' +
+      '</div>' +
+      '<div class="seg-actions">' +
+        '<button class="btn btn-outline btn-sm act-preview" type="button">▶ Xem thử</button>' +
+        '<button class="btn btn-accent btn-sm act-export" type="button">⬆ Xuất đoạn</button>' +
+      '</div>' +
+      '<div class="seg-result">' +
+        '<video controls playsinline></video>' +
+        '<div class="seg-result-meta"><span></span><span class="grow"></span>' +
+          '<button class="btn btn-primary btn-sm act-share" type="button">⬆ Chia sẻ / Lưu</button>' +
+          '<button class="btn btn-outline btn-sm act-download" type="button">⬇ Tải xuống</button>' +
+        '</div>' +
+      '</div>';
+    el.querySelector('.act-preview').addEventListener('click', function(){ previewSegment(i); });
+    el.querySelector('.act-export').addEventListener('click', function(){ exportOne(i); });
+    el.querySelector('.act-share').addEventListener('click', function(){ shareResult(i, false); });
+    el.querySelector('.act-download').addEventListener('click', function(){ shareResult(i, true); });
+    list.appendChild(el);
+  });
+  $('exportAllBtn').disabled = state.exporting;
+}
+
+function renderTimeline(){
+  var bar = $('tlBar');
+  bar.innerHTML = '';
+  if (!state.segments.length || !state.duration) { $('timeline').classList.remove('show'); return; }
+  var covered = 0;
+  state.segments.forEach(function(seg, i){
+    covered = seg.end;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tl-seg';
+    b.style.width = ((seg.end - seg.start) / state.duration * 100) + '%';
+    b.textContent = (i + 1);
+    b.setAttribute('aria-label', 'Nhảy tới đoạn ' + (i + 1));
+    b.addEventListener('click', function(){ previewSegment(i); });
+    bar.appendChild(b);
+  });
+  if (covered < state.duration - 0.005) {
+    var rest = document.createElement('div');
+    rest.className = 'tl-rest';
+    rest.style.width = ((state.duration - covered) / state.duration * 100) + '%';
+    bar.appendChild(rest);
+  }
+  $('timeline').classList.add('show');
+}
+
+/* ---------- Preview ---------- */
+function previewSegment(i){
+  var seg = state.segments[i];
+  if (!seg) return;
+  state.previewUntil = seg.end;
+  mainVideo.currentTime = seg.start;
+  var p = mainVideo.play();
+  if (p && p.catch) p.catch(function(){});
+  var rows = $('segmentList').children;
+  for (var r = 0; r < rows.length; r++) rows[r].classList.toggle('now-playing', r === i);
+  mainVideo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+mainVideo.addEventListener('timeupdate', function(){
+  if (state.previewUntil != null && mainVideo.currentTime >= state.previewUntil) {
+    mainVideo.pause();
+    state.previewUntil = null;
+    var rows = $('segmentList').children;
+    for (var r = 0; r < rows.length; r++) rows[r].classList.remove('now-playing');
+  }
+});
+mainVideo.addEventListener('play', function(){
+  if (state.previewUntil != null && mainVideo.currentTime >= state.previewUntil) state.previewUntil = null;
+});
+
+/* ---------- Export: MediaRecorder + canvas ---------- */
+function pickMime(){
+  if (!window.MediaRecorder) return '';
+  var candidates = [
+    'video/mp4;codecs=avc1.640028,mp4a.40.2',
+    'video/mp4',
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm'
+  ];
+  for (var i = 0; i < candidates.length; i++) {
+    try { if (MediaRecorder.isTypeSupported(candidates[i])) return candidates[i]; } catch(e){}
+  }
+  return '';
+}
+function recorderSupported(){
+  return !!(window.MediaRecorder && HTMLCanvasElement.prototype.captureStream);
+}
+
+function waitEvent(el, ev, timeoutMs){
+  return new Promise(function(resolve, reject){
+    var to = setTimeout(function(){ cleanup(); reject(new Error('timeout ' + ev)); }, timeoutMs || 8000);
+    function on(){ cleanup(); resolve(); }
+    function cleanup(){ clearTimeout(to); el.removeEventListener(ev, on); }
+    el.addEventListener(ev, on);
+  });
+}
+
+function setupAudioTrack(){
+  /* Returns an audio MediaStreamTrack from recVideo, or null. Decided once
+     per file: element captureStream first, WebAudio graph as fallback. */
+  if (state.audioMode === 'capture') {
+    try {
+      var cs = recVideo.captureStream ? recVideo.captureStream() : (recVideo.mozCaptureStream ? recVideo.mozCaptureStream() : null);
+      if (cs) { var at = cs.getAudioTracks()[0]; if (at) return at; }
+    } catch(e){}
+    return null;
+  }
+  if (state.audioMode === 'webaudio' && state.aDest) {
+    return state.aDest.stream.getAudioTracks()[0] || null;
+  }
+  if (state.audioMode === 'none') return null;
+  return undefined; /* undecided */
+}
+
+function decideAudio(){
+  /* Called while recVideo is playing during first export. */
+  try {
+    var cs = recVideo.captureStream ? recVideo.captureStream() : (recVideo.mozCaptureStream ? recVideo.mozCaptureStream() : null);
+    if (cs && cs.getAudioTracks().length) { state.audioMode = 'capture'; return cs.getAudioTracks()[0]; }
+  } catch(e){}
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) {
+      if (!state.actx) {
+        state.actx = new AC();
+        var src = state.actx.createMediaElementSource(recVideo);
+        state.aDest = state.actx.createMediaStreamDestination();
+        src.connect(state.aDest);
+      }
+      if (state.actx.state === 'suspended') state.actx.resume();
+      state.audioMode = 'webaudio';
+      return state.aDest.stream.getAudioTracks()[0] || null;
+    }
+  } catch(e){}
+  state.audioMode = 'none';
+  return null;
+}
+
+function recordSegment(seg, onProgress){
+  return new Promise(function(resolve, reject){
+    var mime = pickMime();
+    if (!mime) { reject(new Error('no-mime')); return; }
+    var W = state.vw || recVideo.videoWidth || 720;
+    var H = state.vh || recVideo.videoHeight || 1280;
+    recCanvas.width = W;
+    recCanvas.height = H;
+    var ctx2d = recCanvas.getContext('2d');
+
+    if (recVideo.src !== state.url) recVideo.src = state.url;
+
+    var chunks = [];
+    var recorder = null;
+    var rafId = null;
+    var safetyTimer = null;
+    var finished = false;
+
+    function cleanup(){
+      if (rafId) cancelAnimationFrame(rafId);
+      if (safetyTimer) clearTimeout(safetyTimer);
+      try { recVideo.pause(); } catch(e){}
+    }
+    function finish(){
+      if (finished) return;
+      finished = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (safetyTimer) clearTimeout(safetyTimer);
+      try { recVideo.pause(); } catch(e){}
+      if (recorder && recorder.state !== 'inactive') {
+        recorder.stop(); /* onstop resolves */
+      } else {
+        resolve(new Blob(chunks, { type: mime.split(';')[0] }));
+      }
+    }
+    state._activeFinish = finish;
+
+    var seeked;
+    if (Math.abs((recVideo.currentTime || 0) - seg.start) < 0.02 && recVideo.readyState >= 2) {
+      seeked = Promise.resolve(); /* already parked at the start point */
+    } else {
+      seeked = waitEvent(recVideo, 'seeked', 9000);
+      try { recVideo.currentTime = seg.start; } catch(e){}
+    }
+    seeked.then(function(){
+      if (finished) return;
+      ctx2d.drawImage(recVideo, 0, 0, W, H);
+      var stream = recCanvas.captureStream(30);
+      var playP = recVideo.play();
+      var begin = function(){
+        if (finished) return;
+        var audioTrack = setupAudioTrack();
+        if (audioTrack === undefined) audioTrack = decideAudio();
+        if (audioTrack) { try { stream.addTrack(audioTrack); } catch(e){} }
+        try {
+          recorder = new MediaRecorder(stream, {
+            mimeType: mime,
+            videoBitsPerSecond: 8000000,
+            audioBitsPerSecond: 128000
+          });
+        } catch(e) {
+          try { recorder = new MediaRecorder(stream, { mimeType: mime }); }
+          catch(e2) { cleanup(); reject(new Error('recorder-failed')); return; }
+        }
+        recorder.ondataavailable = function(ev){ if (ev.data && ev.data.size) chunks.push(ev.data); };
+        recorder.onstop = function(){
+          cleanup();
+          resolve(new Blob(chunks, { type: mime.split(';')[0] }));
+        };
+        recorder.start(250);
+        var durMs = (seg.end - seg.start) * 1000;
+        safetyTimer = setTimeout(finish, durMs + 4000);
+        var tick = function(){
+          if (finished) return;
+          ctx2d.drawImage(recVideo, 0, 0, W, H);
+          var t = recVideo.currentTime;
+          if (onProgress) onProgress(Math.max(0, Math.min(1, (t - seg.start) / (seg.end - seg.start))));
+          if (t >= seg.end - 0.02 || recVideo.ended) { finish(); return; }
+          rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+      };
+      if (playP && playP.then) playP.then(begin).catch(begin);
+      else begin();
+    }).catch(function(){
+      cleanup();
+      reject(new Error('seek-failed'));
+    });
+  });
+}
+
+function setWorkProgress(show, label, pct){
+  var wp = $('workProgress');
+  wp.classList.toggle('show', !!show);
+  if (show) {
+    if (label) $('workLabel').textContent = label;
+    var p = Math.round((pct || 0) * 100);
+    $('workBar').style.width = p + '%';
+    $('workPct').textContent = p + '%';
+    wp.setAttribute('aria-valuenow', p);
+  }
+}
+
+function setExporting(on){
+  state.exporting = on;
+  $('stopExportBtn').hidden = !on;
+  $('exportAllBtn').disabled = on;
+  var btns = $('segmentList').querySelectorAll('.act-export, .act-preview');
+  for (var i = 0; i < btns.length; i++) btns[i].disabled = on;
+}
+function stopExport(){
+  state.exportCancel = true;
+  if (state._activeFinish) { try { state._activeFinish(); } catch(e){} }
+}
+$('stopExportBtn').addEventListener('click', stopExport);
+
+function showResult(i, blob, ext){
+  var row = $('segmentList').children[i];
+  if (!row) return;
+  var old = state.results[i];
+  if (old && old.url) URL.revokeObjectURL(old.url);
+  var url = URL.createObjectURL(blob);
+  state.results[i] = { blob: blob, url: url, ext: ext, name: segFileName(i, ext) };
+  var box = row.querySelector('.seg-result');
+  var vid = box.querySelector('video');
+  vid.src = url;
+  box.querySelector('.seg-result-meta span').textContent = state.results[i].name + ' · ' + fmtBytes(blob.size);
+  box.classList.add('show');
+}
+
+function exportOne(i){
+  if (state.exporting || !state.segments[i]) return Promise.resolve();
+  if (!recorderSupported()) {
+    showStatus('Trình duyệt này chưa hỗ trợ ghi video (MediaRecorder) nên chưa xuất được đoạn. Anh mở trang bằng Safari bản mới hơn hoặc Chrome nhé.', 'error');
+    return Promise.resolve();
+  }
+  state.exportCancel = false;
+  setExporting(true);
+  mainVideo.pause();
+  var seg = state.segments[i];
+  setWorkProgress(true, 'Đang xuất đoạn ' + (i + 1) + ' / ' + state.segments.length + '…', 0);
+  return recordSegment(seg, function(p){
+    setWorkProgress(true, 'Đang xuất đoạn ' + (i + 1) + ' / ' + state.segments.length + '…', p);
+  }).then(function(blob){
+    var ext = blob.type.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
+    if (!state.exportCancel) showResult(i, blob, ext);
+    setWorkProgress(false);
+    if (!state.exportCancel) showStatus('Đã xuất xong đoạn ' + (i + 1) + ' — bấm Chia sẻ / Lưu ở đoạn đó để lưu về máy nhé Anh.', 'ok');
+  }).catch(function(err){
+    setWorkProgress(false);
+    if (err && err.message === 'no-mime') {
+      showStatus('Trình duyệt không hỗ trợ định dạng ghi video nào (MP4/WebM đều không được) nên chưa xuất được nhé Anh.', 'error');
+    } else {
+      showStatus('Xuất đoạn ' + (i + 1) + ' bị lỗi giữa chừng — Anh thử lại giúp Em nhé.', 'error');
+    }
+  }).then(function(){
+    setExporting(false);
+    state._activeFinish = null;
+  });
+}
+
+$('exportAllBtn').addEventListener('click', function(){
+  if (state.exporting || !state.segments.length) return;
+  if (!recorderSupported()) {
+    showStatus('Trình duyệt này chưa hỗ trợ ghi video (MediaRecorder) nên chưa xuất được đoạn. Anh mở trang bằng Safari bản mới hơn hoặc Chrome nhé.', 'error');
+    return;
+  }
+  state.exportCancel = false;
+  setExporting(true);
+  mainVideo.pause();
+  var idx = 0;
+  function next(){
+    if (state.exportCancel || idx >= state.segments.length) {
+      setWorkProgress(false);
+      setExporting(false);
+      state._activeFinish = null;
+      if (!state.exportCancel && idx >= state.segments.length) {
+        showStatus('Đã xuất xong tất cả ' + state.segments.length + ' đoạn — Anh bấm Chia sẻ / Lưu ở từng đoạn để lưu về máy nhé.', 'ok');
+      }
+      return;
+    }
+    var i = idx++;
+    var seg = state.segments[i];
+    setWorkProgress(true, 'Đang xuất đoạn ' + (i + 1) + ' / ' + state.segments.length + '…', 0);
+    recordSegment(seg, function(p){
+      setWorkProgress(true, 'Đang xuất đoạn ' + (i + 1) + ' / ' + state.segments.length + '…', p);
+    }).then(function(blob){
+      var ext = blob.type.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
+      if (!state.exportCancel) showResult(i, blob, ext);
+      next();
+    }).catch(function(){
+      setWorkProgress(false);
+      setExporting(false);
+      state._activeFinish = null;
+      showStatus('Xuất đoạn ' + (i + 1) + ' bị lỗi giữa chừng — các đoạn đã xuất xong vẫn giữ ở trên, Anh thử lại đoạn này nhé.', 'error');
+    });
+  }
+  next();
+});
+
+/* ---------- Share / download ---------- */
+function shareResult(i, forceDownload){
+  var res = state.results[i];
+  if (!res) return;
+  var file = null;
+  try { file = new File([res.blob], res.name, { type: res.blob.type }); } catch(e){}
+  if (!forceDownload && file && navigator.canShare && navigator.share) {
+    var payload = { files: [file] };
+    var can = false;
+    try { can = navigator.canShare(payload); } catch(e){}
+    if (can) {
+      navigator.share(payload).catch(function(err){
+        if (err && err.name !== 'AbortError') downloadResult(res);
+      });
+      return;
+    }
+  }
+  downloadResult(res);
+}
+function downloadResult(res){
+  var a = document.createElement('a');
+  a.href = res.url;
+  a.download = res.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/* ---------- "Dương Đăng" switcher dropdown ---------- */
+var vibeBtn = $('vibeBtn'), vibeMenu = $('vibeMenu');
+function closeVibeMenu(){
+  vibeMenu.classList.remove('open');
+  vibeBtn.setAttribute('aria-expanded', 'false');
+}
+vibeBtn.addEventListener('click', function(e){
+  e.stopPropagation();
+  var open = vibeMenu.classList.toggle('open');
+  vibeBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+vibeMenu.addEventListener('click', function(e){ e.stopPropagation(); });
+document.addEventListener('click', function(){ closeVibeMenu(); });
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeVibeMenu();
+});
+
+/* ---------- Init notes ---------- */
+if (!recorderSupported()) {
+  showStatus('Trình duyệt hiện tại chưa hỗ trợ ghi video (MediaRecorder) — Anh vẫn xem trước và đặt mốc giờ được, nhưng nút Xuất đoạn sẽ chưa chạy. Mở trang bằng Safari bản mới hoặc Chrome để xuất MP4 nhé Anh.', 'error');
+}
+})();
+</script>
+</body>
+</html>

@@ -162,12 +162,39 @@ button{font-family:inherit}
 
 /* Credit under the title + update code at page bottom */
 .vibe{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
-.vibe a{
-  color:var(--accent);font-weight:700;text-decoration:none;
-  cursor:pointer;
+.vibe-toggle{
+  appearance:none;-webkit-appearance:none;background:none;border:none;padding:0;
+  color:var(--accent);font:inherit;font-weight:700;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
+  display:inline-flex;align-items:center;gap:5px;
 }
-.vibe a:active{opacity:.65}
+.vibe-toggle:active{opacity:.65}
+.vibe-toggle::after{
+  content:"";width:0;height:0;flex:0 0 auto;
+  border-left:4.5px solid transparent;border-right:4.5px solid transparent;
+  border-top:5.5px solid currentColor;
+  transition:transform .15s;
+}
+.vibe-toggle[aria-expanded="true"]::after{transform:rotate(180deg)}
+.vibe-menu{
+  margin-top:10px;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--shadow);padding:6px;display:grid;gap:2px;
+  max-width:340px;
+}
+.vibe-menu[hidden]{display:none}
+.vibe-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 12px;border-radius:9px;color:var(--text);text-decoration:none;
+  font-size:14px;font-weight:600;
+}
+a.vibe-item:active{background:var(--surface-2)}
+.vibe-item .vi-arrow{color:var(--muted);font-weight:400}
+.vibe-item.current{color:var(--muted)}
+.vibe-item .vi-tag{
+  font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-soft);padding:3px 7px;border-radius:999px;
+  white-space:nowrap;
+}
 .foot{margin-top:26px;text-align:center}
 .foot .upd{margin:0;font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.03em}
 .dl-btn{
@@ -262,7 +289,12 @@ button{font-family:inherit}
 <div class="wrap">
   <header class="top">
     <h1>Cắt nhạc <span id="titleSeg">25 giây</span></h1>
-    <p class="vibe">Vibe Code by <a href="https://shyd-git.github.io/cut25s/xao-tron/">Dương Đăng</a></p>
+    <p class="vibe">Vibe Code by <button type="button" class="vibe-toggle" id="vibeToggle" aria-haspopup="true" aria-expanded="false">Dương Đăng</button></p>
+    <nav class="vibe-menu" id="vibeMenu" aria-label="Chuyển sang trang khác" hidden>
+      <span class="vibe-item current">Cắt Nhạc <span class="vi-tag">Đang xem</span></span>
+      <a class="vibe-item" href="https://shyd-git.github.io/cut25s/xao-tron/">Xáo Trộn Nhạc <span class="vi-arrow">→</span></a>
+      <a class="vibe-item" href="https://shyd-git.github.io/cut25s/cat-video/">Cắt Video <span class="vi-arrow">→</span></a>
+    </nav>
     <p id="introText">Chọn 1 file nhạc — trang tự cắt thành các đoạn 25 giây, cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới nếu muốn. Nghe thử rồi bấm Chia sẻ để lưu.</p>
     <div class="meta-row">
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
@@ -377,7 +409,7 @@ button{font-family:inherit}
   </div>
   <p class="note">File dài thì lần cắt đầu lâu hơn vài giây. Đoạn MP3 đã cắt đúng độ dài từng đoạn nên ghép vào CapCut không còn dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: CN25S-V14 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: CN25S-V15 · 18/11/2026</p>
   </footer>
 </div>
 
@@ -1292,6 +1324,28 @@ button{font-family:inherit}
   // Initialise selector UI — default MP3 at 128k, default segment 25s
   updateDurationLabels();
   setFormat('mp3');
+})();
+</script>
+<script>
+(function(){
+  // "Dương Đăng" credit: tap to expand the sibling-page switcher menu.
+  var toggle = document.getElementById('vibeToggle');
+  var menu = document.getElementById('vibeMenu');
+  if(!toggle || !menu) return;
+  function setOpen(open){
+    menu.hidden = !open;
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  toggle.addEventListener('click', function(e){
+    e.stopPropagation();
+    setOpen(menu.hidden);
+  });
+  document.addEventListener('click', function(e){
+    if(!menu.hidden && !menu.contains(e.target)) setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') setOpen(false);
+  });
 })();
 </script>
 </body>

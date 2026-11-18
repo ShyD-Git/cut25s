@@ -61,6 +61,24 @@ button{font-family:inherit}
 .vibe{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
 .vibe b{color:var(--accent);font-weight:700}
 .vibe a{color:var(--accent);font-weight:700;text-decoration:none;cursor:pointer}
+.dd-wrap{position:relative;display:inline-block}
+.dd-toggle{background:none;border:none;padding:0;margin:0;font:inherit;font-size:inherit;color:var(--accent);font-weight:700;cursor:pointer;-webkit-appearance:none;appearance:none}
+.dd-caret{display:inline-block;font-size:9px;margin-left:3px;vertical-align:2px;transition:transform .15s ease}
+.dd-wrap.open .dd-caret{transform:rotate(180deg)}
+.dd-menu{
+  position:absolute;left:0;top:calc(100% + 8px);z-index:60;min-width:230px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);padding:6px;display:none;text-align:left;
+}
+.dd-wrap.open .dd-menu{display:block}
+.dd-menu a,.dd-menu .dd-current{
+  display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:9px;
+  font-size:14px;font-weight:600;color:var(--text);text-decoration:none;line-height:1.3;
+}
+.dd-menu a:active,.dd-menu a:hover{background:var(--accent-soft)}
+.dd-menu .dd-ic{font-size:15px;line-height:1;flex:0 0 auto}
+.dd-menu .dd-current{color:var(--muted);cursor:default}
+.dd-tag{margin-left:auto;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:3px 7px;border-radius:999px;white-space:nowrap}
 .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);background:var(--surface);border-radius:999px;font-size:12.5px;font-weight:600}
 .pill b{color:var(--accent)}
@@ -353,7 +371,7 @@ button{font-family:inherit}
 <div class="wrap">
   <header class="top">
     <h1>Xáo trộn <span>nhạc</span></h1>
-    <p class="vibe">Vibe Code by <a href="https://shyd-git.github.io/cut25s/" aria-label="Chuyển sang trang Cắt 25s">Dương Đăng</a></p>
+    <p class="vibe">Vibe Code by <span class="dd-wrap" id="ddWrap"><button class="dd-toggle" id="ddToggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="ddMenu">Dương Đăng<span class="dd-caret" aria-hidden="true">▼</span></button><span class="dd-menu" id="ddMenu" role="menu"><a href="https://shyd-git.github.io/cut25s/" role="menuitem"><span class="dd-ic" aria-hidden="true">✂️</span>Cắt Nhạc 25s</a><span class="dd-current" role="menuitem" aria-current="page"><span class="dd-ic" aria-hidden="true">🔀</span>Xáo Trộn Nhạc<span class="dd-tag">Trang này</span></span><a href="https://shyd-git.github.io/cut25s/cat-video/" role="menuitem"><span class="dd-ic" aria-hidden="true">🎬</span>Cắt Video</a></span></span></p>
     <p>Chọn 1 file nhạc — trang chia thành <b>3 đoạn theo mốc giờ Anh tự nhập</b> (đổi được số đoạn), Anh bấm xáo trộn (hoặc tự sắp lại thứ tự, xoá bớt đoạn không cần), rồi ghép tất cả thành <b>1 bài hoàn chỉnh</b> để nghe thử và lưu về máy.</p>
     <div class="meta-row">
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
@@ -515,7 +533,7 @@ button{font-family:inherit}
   </div>
   <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra được cắt theo số frame gần nhất với độ dài thật (lệch tối đa khoảng 0,01 giây) nên đưa vào CapCut không bị thừa đoạn trống ở đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V11 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V12 · 18/11/2026</p>
   </footer>
 </div>
 
@@ -2243,6 +2261,26 @@ button{font-family:inherit}
     hideStatus(); setProgress(null);
     openPicker();
   });
+
+  // "Dương Đăng" dropdown — sub-links to the sibling pages
+  var ddWrap = document.getElementById('ddWrap');
+  var ddToggle = document.getElementById('ddToggle');
+  if(ddWrap && ddToggle){
+    function ddSetOpen(open){
+      ddWrap.classList.toggle('open', open);
+      ddToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    ddToggle.addEventListener('click', function(e){
+      e.stopPropagation();
+      ddSetOpen(!ddWrap.classList.contains('open'));
+    });
+    document.addEventListener('click', function(e){
+      if(ddWrap.classList.contains('open') && !ddWrap.contains(e.target)) ddSetOpen(false);
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && ddWrap.classList.contains('open')){ ddSetOpen(false); ddToggle.focus(); }
+    });
+  }
 
   // Init
   renderSegDefs();
