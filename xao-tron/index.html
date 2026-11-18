@@ -515,7 +515,7 @@ button{font-family:inherit}
   </div>
   <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra được cắt theo số frame gần nhất với độ dài thật (lệch tối đa khoảng 0,01 giây) nên đưa vào CapCut không bị thừa đoạn trống ở đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V10 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V11 · 18/11/2026</p>
   </footer>
 </div>
 
@@ -813,7 +813,7 @@ button{font-family:inherit}
     for(var i = 0; i < segCount; i++){
       var en = segEnds[i];
       if(en == null || !isFinite(en)) break;
-      if(currentBuffer && en > currentBuffer.duration) en = Math.floor(currentBuffer.duration * 100) / 100;
+      if(currentBuffer && en > currentBuffer.duration) en = Math.round(currentBuffer.duration * 100) / 100;
       var d = Math.round((en - starts[i]) * 100) / 100;
       if(d <= 0) break;
       list.push({index:i, start:starts[i], end:en, duration:d});
@@ -1029,7 +1029,10 @@ button{font-family:inherit}
         segDefError('Đoạn ' + (i + 1) + ': giờ kết thúc ' + formatHMS(en) + ' phải sau giờ bắt đầu ' + formatHMS(starts[i]) + '.');
         return false;
       }
-      if(en > currentBuffer.duration + 0.001){
+      // Compare at the centisecond precision the UI displays: an end equal
+      // to the shown song length (e.g. 53,11 for a 53,107s song) is valid —
+      // buildCustomSegments clamps the actual cut to the real audio.
+      if(en > Math.round(currentBuffer.duration * 100) / 100 + 0.001){
         segDefError('Đoạn ' + (i + 1) + ' kết thúc ở ' + formatHMS(en) + ' nhưng bài chỉ dài ' + formatHMS(currentBuffer.duration) + '.');
         return false;
       }
