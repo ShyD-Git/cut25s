@@ -60,6 +60,7 @@ button{font-family:inherit}
 .top p{margin:10px 0 0;color:var(--muted);font-size:15px;max-width:560px}
 .vibe{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
 .vibe b{color:var(--accent);font-weight:700}
+.vibe a{color:var(--accent);font-weight:700;text-decoration:none;cursor:pointer}
 .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);background:var(--surface);border-radius:999px;font-size:12.5px;font-weight:600}
 .pill b{color:var(--accent)}
@@ -297,6 +298,11 @@ button{font-family:inherit}
 .sd-dur-label{font-size:12px;color:var(--muted);font-weight:700}
 .sd-durval{width:66px}
 .sd-dur-unit{font-size:12.5px;color:var(--muted);font-weight:600}
+.sd-chips{display:inline-flex;gap:6px;flex-wrap:wrap}
+.sd-chip{min-height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);font-weight:700;font-size:13px;cursor:pointer;font-family:"JetBrains Mono",monospace}
+.sd-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.sd-chip:active{border-color:var(--accent);color:var(--accent)}
+.sd-chip.active:active{color:#fff}
 .sd-note{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
 .sd-msg{display:none;margin:10px 0 0;color:#b91c1c;font-size:13px;font-weight:600;line-height:1.45}
 .sd-msg.show{display:block}
@@ -347,7 +353,7 @@ button{font-family:inherit}
 <div class="wrap">
   <header class="top">
     <h1>Xáo trộn <span>nhạc</span></h1>
-    <p class="vibe">Vibe Code by <b>Dương Đăng</b></p>
+    <p class="vibe">Vibe Code by <a href="https://shyd-git.github.io/cut25s/" aria-label="Chuyển sang trang Cắt 25s">Dương Đăng</a></p>
     <p>Chọn 1 file nhạc — trang chia thành <b>3 đoạn theo mốc giờ Anh tự nhập</b> (đổi được số đoạn), Anh bấm xáo trộn (hoặc tự sắp lại thứ tự, xoá bớt đoạn không cần), rồi ghép tất cả thành <b>1 bài hoàn chỉnh</b> để nghe thử và lưu về máy.</p>
     <div class="meta-row">
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
@@ -394,7 +400,7 @@ button{font-family:inherit}
         <button class="btn btn-outline btn-sm" id="equalBtn" type="button">↔ Chia đều theo độ dài bài</button>
         <button class="btn btn-accent btn-sm" id="applySegBtn" type="button">✓ Áp dụng mốc giờ</button>
       </div>
-      <p class="dur-hint">Anh nhập <b>giờ kết thúc</b> cho từng đoạn: <b>chỉ cần gõ số liên tục</b>, trang <b>tự chèn dấu : và ,</b> — ví dụ gõ <b>004500</b> là thành <b>00:00:45,00</b> (giờ:phút:giây,phần trăm giây), khỏi bấm dấu : trên bàn phím; bấm <b>xoá</b> là lùi từng số, bấm <b>Delete</b> là về 00:00:00,00. Hoặc chỉnh <b>ô Độ dài</b> ngay dưới mỗi đoạn: gõ thẳng số giây, hoặc bấm nút <b>− / +</b> để giảm / tăng độ dài đoạn đó từng <b>1 giây</b>. Đoạn sau <b>tự bắt đầu sau đoạn trước 0,01s</b> — ví dụ đoạn 1 kết thúc <b>00:00:25,00</b> thì đoạn 2 tự bắt đầu <b>00:00:25,01</b>, cứ thế cho các đoạn tiếp theo. Chọn file xong trang tự chia đều 3 đoạn trước để Anh sửa lại mốc giờ theo ý.</p>
+      <p class="dur-hint">Anh nhập <b>giờ kết thúc</b> cho từng đoạn: <b>chỉ cần gõ số liên tục</b>, trang <b>tự chèn dấu : và ,</b> — ví dụ gõ <b>004500</b> là thành <b>00:00:45,00</b> (giờ:phút:giây,phần trăm giây), khỏi bấm dấu : trên bàn phím; bấm <b>xoá</b> là lùi từng số, bấm <b>Delete</b> là về 00:00:00,00. Hoặc chỉnh <b>ô Độ dài</b> ngay dưới mỗi đoạn: gõ thẳng số giây, bấm nút <b>− / +</b> để giảm / tăng độ dài đoạn đó từng <b>1 giây</b>, hoặc bấm chip nhanh <b>25s</b> / <b>20s</b> để đặt độ dài đoạn đúng 25 / 20 giây. Đoạn sau <b>tự bắt đầu sau đoạn trước 0,01s</b> — ví dụ đoạn 1 kết thúc <b>00:00:25,00</b> thì đoạn 2 tự bắt đầu <b>00:00:25,01</b>, cứ thế cho các đoạn tiếp theo. Chọn file xong trang tự chia đều 3 đoạn trước để Anh sửa lại mốc giờ theo ý.</p>
     </div>
   </section>
 
@@ -509,7 +515,7 @@ button{font-family:inherit}
   </div>
   <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra được cắt theo số frame gần nhất với độ dài thật (lệch tối đa khoảng 0,01 giây) nên đưa vào CapCut không bị thừa đoạn trống ở đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V9 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V10 · 18/11/2026</p>
   </footer>
 </div>
 
@@ -883,7 +889,11 @@ button{font-family:inherit}
             '<button class="count-btn sd-dminus" type="button" aria-label="Giảm độ dài đoạn ' + (i + 1) + ' đi 1 giây">−</button>' +
             '<input class="count-input sd-durval" type="text" inputmode="decimal" value="' + durVal + '" autocomplete="off" aria-label="Độ dài đoạn ' + (i + 1) + ' tính bằng giây">' +
             '<button class="count-btn sd-dplus" type="button" aria-label="Tăng độ dài đoạn ' + (i + 1) + ' thêm 1 giây">＋</button>' +
-          '</div><span class="sd-dur-unit">giây</span></div>';
+          '</div><span class="sd-dur-unit">giây</span>' +
+          '<span class="sd-chips">' +
+            '<button class="sd-chip' + (dur != null && Math.abs(dur - 25) < 0.005 ? ' active' : '') + '" type="button" data-dur="25" aria-label="Đặt nhanh độ dài đoạn ' + (i + 1) + ' là 25 giây">25s</button>' +
+            '<button class="sd-chip' + (dur != null && Math.abs(dur - 20) < 0.005 ? ' active' : '') + '" type="button" data-dur="20" aria-label="Đặt nhanh độ dài đoạn ' + (i + 1) + ' là 20 giây">20s</button>' +
+          '</span></div>';
         row.innerHTML =
           '<div class="sd-head"><span class="sd-num">' + (i + 1) + '</span><strong>Đoạn ' + (i + 1) + '</strong>' +
           '<span class="sd-dur">' + (dur != null && dur > 0 ? 'dài ' + dur.toFixed(2).replace('.', ',') + ' giây' : 'chưa đủ mốc giờ') + '</span></div>' +
@@ -960,6 +970,12 @@ button{font-family:inherit}
         function currentDur(){
           if(segEnds[i] == null || !isFinite(segEnds[i])) return null;
           return Math.round((segEnds[i] - starts[i]) * 100) / 100;
+        }
+        var chips = row.querySelectorAll('.sd-chip');
+        for(var ci = 0; ci < chips.length; ci++){
+          chips[ci].addEventListener('click', function(){
+            setSegDuration(parseFloat(this.getAttribute('data-dur')));
+          });
         }
         var durInput = row.querySelector('.sd-durval');
         var dMinus = row.querySelector('.sd-dminus');

@@ -162,7 +162,12 @@ button{font-family:inherit}
 
 /* Credit under the title + update code at page bottom */
 .vibe{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
-.vibe b{color:var(--accent);font-weight:700}
+.vibe a{
+  color:var(--accent);font-weight:700;text-decoration:none;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.vibe a:active{opacity:.65}
 .foot{margin-top:26px;text-align:center}
 .foot .upd{margin:0;font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.03em}
 .dl-btn{
@@ -257,7 +262,7 @@ button{font-family:inherit}
 <div class="wrap">
   <header class="top">
     <h1>Cắt nhạc <span id="titleSeg">25 giây</span></h1>
-    <p class="vibe">Vibe Code by <b>Dương Đăng</b></p>
+    <p class="vibe">Vibe Code by <a href="https://shyd-git.github.io/cut25s/xao-tron/">Dương Đăng</a></p>
     <p id="introText">Chọn 1 file nhạc — trang tự cắt thành các đoạn 25 giây, cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới nếu muốn. Nghe thử rồi bấm Chia sẻ để lưu.</p>
     <div class="meta-row">
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
@@ -372,7 +377,7 @@ button{font-family:inherit}
   </div>
   <p class="note">File dài thì lần cắt đầu lâu hơn vài giây. Đoạn MP3 đã cắt đúng độ dài từng đoạn nên ghép vào CapCut không còn dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: CN25S-V13 · 17/11/2026</p>
+    <p class="upd">Mã cập nhật: CN25S-V14 · 18/11/2026</p>
   </footer>
 </div>
 
