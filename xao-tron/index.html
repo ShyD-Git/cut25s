@@ -228,6 +228,19 @@ button{font-family:inherit}
   display:grid;place-items:center;
 }
 .move-btn:disabled{opacity:.3;cursor:default}
+.del-btn{
+  width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);
+  color:#b91c1c;font-size:16px;font-weight:700;line-height:1;cursor:pointer;padding:0;flex:0 0 44px;
+  display:grid;place-items:center;-webkit-appearance:none;appearance:none;
+}
+.del-btn:active{border-color:#b91c1c;background:#fef2f2}
+@media(prefers-color-scheme: dark){.del-btn{color:#fca5a5}.del-btn:active{background:#2b1414}}
+.removed-bar{display:none;margin-top:10px;padding:12px 14px;background:var(--warn);border:1px solid var(--line);border-radius:14px}
+.removed-bar.show{display:block}
+.removed-bar p{margin:0;font-size:13px;font-weight:600;line-height:1.5}
+.removed-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.removed-chip{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit}
+.removed-chip:active{border-color:var(--accent);color:var(--accent)}
 
 /* Playback progress inside a segment card */
 .seg-progress{display:none;flex:1 0 100%;align-items:center;gap:10px;margin-top:4px}
@@ -328,7 +341,7 @@ button{font-family:inherit}
   <header class="top">
     <h1>Xáo trộn <span>nhạc</span></h1>
     <p class="vibe">Vibe Code by <b>Dương Đăng</b></p>
-    <p>Chọn 1 file nhạc — trang chia thành <b>3 đoạn theo mốc giờ Anh tự nhập</b> (đổi được số đoạn), Anh bấm xáo trộn (hoặc tự sắp lại thứ tự), rồi ghép tất cả thành <b>1 bài hoàn chỉnh</b> để nghe thử và lưu về máy.</p>
+    <p>Chọn 1 file nhạc — trang chia thành <b>3 đoạn theo mốc giờ Anh tự nhập</b> (đổi được số đoạn), Anh bấm xáo trộn (hoặc tự sắp lại thứ tự, xoá bớt đoạn không cần), rồi ghép tất cả thành <b>1 bài hoàn chỉnh</b> để nghe thử và lưu về máy.</p>
     <div class="meta-row">
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
       <span class="pill">Chia <b id="pillSeg">3 đoạn</b> · nối cách <b>0,01s</b></span>
@@ -455,6 +468,11 @@ button{font-family:inherit}
 
   <div class="list" id="segmentList"></div>
 
+  <div class="removed-bar" id="removedBar">
+    <p id="removedText">Đã xoá khỏi bài ghép:</p>
+    <div class="removed-chips" id="removedChips"></div>
+  </div>
+
   <!-- Merge -->
   <section class="merge-card" id="mergeCard" aria-live="polite">
     <h2>Bài đã ghép</h2>
@@ -479,12 +497,12 @@ button{font-family:inherit}
 
   <div class="how">
     <div><b>1. Chọn nhạc &amp; nhập mốc giờ</b><p>Nghe thử bài gốc, tua tới mốc cần cắt rồi nhập giờ kết thúc cho từng đoạn — đoạn sau tự bắt đầu sau đoạn trước 0,01s.</p></div>
-    <div><b>2. Xáo trộn thứ tự</b><p>Bấm xáo trộn ngẫu nhiên, hoặc bấm ▲ ▼ để tự tay dời từng đoạn lên / xuống.</p></div>
+    <div><b>2. Xáo trộn, sắp xếp, xoá đoạn</b><p>Bấm xáo trộn ngẫu nhiên, bấm ▲ ▼ để tự tay dời từng đoạn, hoặc bấm ✕ trên đoạn không cần (ví dụ đoạn ở giữa) để loại nó khỏi bài ghép — thêm lại được bất cứ lúc nào.</p></div>
     <div><b>3. Ghép &amp; lưu</b><p>Nghe thử bài ghép ngay trên trang (kéo thanh tua hoặc bấm −10s / +10s), ưng ý thì bấm Chia sẻ → “Lưu vào Tệp”.</p></div>
   </div>
   <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra đúng độ dài từng mẫu âm thanh nên đưa vào CapCut không bị dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V3 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V4 · 18/11/2026</p>
   </footer>
 </div>
 
@@ -518,6 +536,9 @@ button{font-family:inherit}
   var pillSegEl = document.getElementById('pillSeg');
   var toolbar = document.getElementById('toolbar');
   var segmentList = document.getElementById('segmentList');
+  var removedBar = document.getElementById('removedBar');
+  var removedText = document.getElementById('removedText');
+  var removedChips = document.getElementById('removedChips');
   var shuffleBtn = document.getElementById('shuffleBtn');
   var resetOrderBtn = document.getElementById('resetOrderBtn');
   var stopBtn = document.getElementById('stopBtn');
@@ -1623,9 +1644,14 @@ button{font-family:inherit}
     orderSeqEl.innerHTML = 'Đoạn gốc: ' + parts.join(' → ');
     var sub = document.getElementById('toolbarSub');
     if(sub){
-      sub.textContent = isOriginalOrder()
-        ? 'Đang ở thứ tự gốc. Bấm Xáo trộn để đảo ngẫu nhiên, hoặc dùng nút ▲ ▼ ở từng đoạn để tự sắp.'
-        : 'Đã đổi thứ tự. Bấm ↩ Thứ tự gốc nếu muốn quay lại như ban đầu.';
+      var remCount = removedIndices().length;
+      if(remCount){
+        sub.textContent = 'Đã xoá ' + remCount + ' đoạn khỏi bài ghép. Bấm “＋ Thêm lại” ở mục đã xoá bên dưới danh sách, hoặc ↩ Thứ tự gốc để đưa tất cả các đoạn về.';
+      } else {
+        sub.textContent = isOriginalOrder()
+          ? 'Đang ở thứ tự gốc. Bấm Xáo trộn để đảo ngẫu nhiên, dùng nút ▲ ▼ để tự sắp, hoặc bấm ✕ để xoá đoạn không cần khỏi bài ghép.'
+          : 'Đã đổi thứ tự. Bấm ↩ Thứ tự gốc nếu muốn quay lại như ban đầu.';
+      }
     }
   }
   function renderSegments(){
@@ -1680,8 +1706,16 @@ button{font-family:inherit}
       moveBtns.appendChild(upBtn);
       moveBtns.appendChild(downBtn);
 
+      var delBtn = document.createElement('button');
+      delBtn.className='del-btn';
+      delBtn.type='button';
+      delBtn.textContent='✕';
+      delBtn.setAttribute('aria-label','Xoá đoạn gốc '+(seg.index+1)+' khỏi bài ghép');
+      delBtn.addEventListener('click', function(){ removeSegmentAt(pos); });
+
       actions.appendChild(playBtn);
       actions.appendChild(moveBtns);
+      actions.appendChild(delBtn);
 
       var prog = document.createElement('div');
       prog.className='seg-progress';
@@ -1727,6 +1761,57 @@ button{font-family:inherit}
       row.appendChild(prog);
       segmentList.appendChild(row);
     });
+    renderRemovedBar();
+  }
+
+  // ---------- Delete / restore segments ----------
+  // A deleted segment simply leaves `order`: every merge, preview and
+  // share path already works off `order`, so the segment vanishes from
+  // the merged song and the exported file, but its timestamps stay put
+  // and it can be added back at any time.
+  function removedIndices(){
+    var out = [];
+    for(var i=0;i<segments.length;i++) if(order.indexOf(i) === -1) out.push(i);
+    return out;
+  }
+  function renderRemovedBar(){
+    if(!removedBar) return;
+    var rem = removedIndices();
+    removedBar.classList.toggle('show', rem.length > 0);
+    if(!rem.length) return;
+    if(removedText){
+      removedText.textContent = 'Đã xoá ' + rem.length + ' đoạn khỏi bài ghép — các đoạn này không có trong bài ghép nghe thử và file xuất ra:';
+    }
+    if(removedChips){
+      removedChips.innerHTML = '';
+      rem.forEach(function(idx){
+        var seg = segments[idx];
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'removed-chip';
+        b.textContent = '＋ Thêm lại Đoạn ' + (idx + 1) + ' (' + formatHMS(seg.start) + ' → ' + formatHMS(seg.end) + ')';
+        b.setAttribute('aria-label', 'Thêm lại đoạn gốc ' + (idx + 1) + ' vào cuối bài ghép');
+        b.addEventListener('click', function(){ restoreSegment(idx); });
+        removedChips.appendChild(b);
+      });
+    }
+  }
+  function removeSegmentAt(pos){
+    if(order.length <= 1){
+      showStatus('Bài ghép phải còn ít nhất 1 đoạn nên không xoá thêm được nữa nhé Anh.', 'error');
+      return;
+    }
+    hideStatus();
+    order.splice(pos, 1);
+    renderSegments();
+    refreshMergeCard();
+  }
+  function restoreSegment(idx){
+    if(order.indexOf(idx) !== -1) return;
+    hideStatus();
+    order.push(idx);
+    renderSegments();
+    refreshMergeCard();
   }
 
   // ---------- Order actions ----------
@@ -1899,6 +1984,7 @@ button{font-family:inherit}
       toolbar.classList.remove('show');
       mergeCard.classList.remove('show');
       segmentList.innerHTML='';
+      if(removedBar) removedBar.classList.remove('show');
     }
   }
 
@@ -1939,6 +2025,7 @@ button{font-family:inherit}
     toolbar.classList.remove('show');
     mergeCard.classList.remove('show');
     segmentList.innerHTML='';
+    if(removedBar) removedBar.classList.remove('show');
     hideStatus(); setProgress(null);
     openPicker();
   });
