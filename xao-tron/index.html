@@ -507,9 +507,9 @@ button{font-family:inherit}
     <div><b>2. Xáo trộn, sắp xếp, xoá đoạn</b><p>Bấm xáo trộn ngẫu nhiên, bấm ▲ ▼ để tự tay dời từng đoạn, hoặc bấm ✕ trên đoạn không cần (ví dụ đoạn ở giữa) để loại nó khỏi bài ghép — thêm lại được bất cứ lúc nào.</p></div>
     <div><b>3. Ghép &amp; lưu</b><p>Nghe thử bài ghép ngay trên trang (kéo thanh tua hoặc bấm −10s / +10s), ưng ý thì bấm Chia sẻ → “Lưu vào Tệp”. Cần lấy riêng 1 đoạn thì bấm nút “Chia sẻ đoạn N” ngay trên thẻ đoạn đó.</p></div>
   </div>
-  <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra đúng độ dài từng mẫu âm thanh nên đưa vào CapCut không bị dư đuôi.</p>
+  <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra được cắt theo số frame gần nhất với độ dài thật (lệch tối đa khoảng 0,01 giây) nên đưa vào CapCut không bị thừa đoạn trống ở đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V8 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V9 · 18/11/2026</p>
   </footer>
 </div>
 
@@ -1118,7 +1118,7 @@ button{font-family:inherit}
     for(var i=0;i<all.length;i++) all[i].classList.toggle('active', all[i]===b);
   });
 
-  // ---------- Encoders (whole-buffer; same gapless scheme as Cắt Nhạc 25s) ----------
+  // ---------- Encoders (whole-buffer) ----------
   function bufferToWavBlob(buffer){
     var sampleRate = buffer.sampleRate;
     var frameCount = buffer.length;
@@ -1156,13 +1156,19 @@ button{font-family:inherit}
     }
     return out;
   }
-  // MP3 frames hold a fixed number of samples and the encoder adds delay +
-  // padding, so a raw stream never decodes to exactly the intended length —
-  // editors like CapCut round the extra fraction up and the clip sticks out.
-  // The page stamps the stream with an Info/Xing gapless header (delay 576,
-  // computed padding), exactly as LAME does, so players trim to the EXACT
-  // sample count. Same proven code as the Cắt Nhạc 25s page (CN25S-V11).
-  var MP3_ENC_DELAY = 576;
+  // MP3 frames hold a fixed number of samples (1152) and the encoder adds
+  // ~1105 samples of delay + end padding, so a stream always decodes a bit
+  // longer than the content. Editors that ignore the LAME gapless tag —
+  // CapCut is one — show all of that excess as blank length at the tail.
+  // An earlier version prepended a silent Info/Xing frame carrying the tag,
+  // like LAME does; gapless-aware players then trimmed exactly, but CapCut
+  // ignored the tag AND kept the extra silent frame, so the blank tail got
+  // LONGER (about 56ms on a 48kHz file). The fix below therefore skips the
+  // tag frame entirely and instead trims the stream to the frame count
+  // whose decoded length is CLOSEST to the exact content length: the error
+  // is at most half a frame (~12ms at 48kHz, less than one video frame),
+  // so no blank tail shows in CapCut, and the behaviour is the same in
+  // every player because nothing depends on tag support.
   function mp3FrameInfo(bytes, off){
     if(off + 4 > bytes.length) return null;
     if(bytes[off] !== 0xFF || (bytes[off+1] & 0xE0) !== 0xE0) return null;
@@ -1201,51 +1207,14 @@ button{font-family:inherit}
     if(!cut) return bytes;
     return bytes.subarray(0, cut);
   }
-  function writeU32be(bytes, off, val){
-    bytes[off] = (val >>> 24) & 0xFF;
-    bytes[off+1] = (val >>> 16) & 0xFF;
-    bytes[off+2] = (val >>> 8) & 0xFF;
-    bytes[off+3] = val & 0xFF;
-  }
-  function addGaplessHeader(bytes, contentSamples){
+  // Keep only the frames whose total decoded length is closest to the
+  // exact content length (see the note above): the budget is that length
+  // rounded to a whole number of frames.
+  function trimMp3ToLength(bytes, contentSamples){
     var first = mp3FrameInfo(bytes, 0);
-    if(!first) return null;
-    var off = 0, frames = 0;
-    while(off < bytes.length){
-      var info = mp3FrameInfo(bytes, off);
-      if(!info || info.len <= 0) break;
-      frames++;
-      off += info.len;
-    }
-    if(!frames || off !== bytes.length) return null;
-    var spf = first.spf;
-    var xingOff = first.ver === 3 ? (first.mono ? 21 : 36) : (first.mono ? 13 : 21);
-    if(first.len < xingOff + 120 + 36) return null;
-    var totalFrames = frames + 1;
-    var padding = totalFrames * spf - MP3_ENC_DELAY - contentSamples;
-    if(padding < 0 || padding > 4095) return null;
-    var totalBytes = bytes.length + first.len;
-    var frame = new Uint8Array(first.len);
-    frame.set(bytes.subarray(0, 4), 0);
-    var p = xingOff;
-    frame[p] = 0x49; frame[p+1] = 0x6E; frame[p+2] = 0x66; frame[p+3] = 0x6F; // "Info"
-    p += 4;
-    writeU32be(frame, p, 0xF); p += 4;
-    writeU32be(frame, p, totalFrames); p += 4;
-    writeU32be(frame, p, totalBytes); p += 4;
-    for(var i=0;i<100;i++){ frame[p] = Math.min(255, Math.floor(i * 256 / 100)); p++; }
-    writeU32be(frame, p, 0); p += 4;
-    var t = p;
-    var encStr = 'LAME3.100';
-    for(var s=0;s<9;s++) frame[t+s] = encStr.charCodeAt(s);
-    frame[t+21] = (MP3_ENC_DELAY >> 4) & 0xFF;
-    frame[t+22] = ((MP3_ENC_DELAY & 0xF) << 4) | ((padding >> 8) & 0xF);
-    frame[t+23] = padding & 0xFF;
-    writeU32be(frame, t+28, totalBytes);
-    var out = new Uint8Array(totalBytes);
-    out.set(frame, 0);
-    out.set(bytes, first.len);
-    return out;
+    var spf = first ? first.spf : 1152;
+    var budget = Math.max(spf, Math.round(contentSamples / spf) * spf);
+    return truncateMp3Frames(bytes, budget);
   }
   function bufferToMp3Blob(buffer){
     var Mp3Encoder = (window.lamejs && window.lamejs.Mp3Encoder) || window.Mp3Encoder;
@@ -1274,13 +1243,7 @@ button{font-family:inherit}
       return joined;
     }
     var raw = runEncoder(0, frameCount);
-    var headered = addGaplessHeader(raw, frameCount);
-    if(headered) return new Blob([headered], {type:'audio/mpeg'});
-    var skip = Math.min(1105, Math.max(0, frameCount - 1));
-    var legacy = runEncoder(skip, frameCount - skip);
-    var spf = sampleRate >= 32000 ? 1152 : 576;
-    var budget = Math.max(spf, Math.round(frameCount / spf) * spf);
-    return new Blob([truncateMp3Frames(legacy, budget)], {type:'audio/mpeg'});
+    return new Blob([trimMp3ToLength(raw, frameCount)], {type:'audio/mpeg'});
   }
 
   // ---------- Async (progress-reporting) variants ----------
@@ -1383,16 +1346,12 @@ button{font-family:inherit}
     function slice(from, to){
       return function(f){ if(onProgress) onProgress(from + (to - from) * f); };
     }
-    var raw = await encodeMp3RangeAsync(buffer, 0, frameCount, slice(0, 0.94));
-    if(onProgress) onProgress(0.96);
+    var raw = await encodeMp3RangeAsync(buffer, 0, frameCount, slice(0, 0.97));
+    if(onProgress) onProgress(0.99);
     await nextFrame();
-    var headered = addGaplessHeader(raw, frameCount);
-    if(headered){ if(onProgress) onProgress(1); return new Blob([headered], {type:'audio/mpeg'}); }
-    var skip = Math.min(1105, Math.max(0, frameCount - 1));
-    var legacy = await encodeMp3RangeAsync(buffer, skip, frameCount - skip, slice(0.96, 1));
-    var spf = sampleRate >= 32000 ? 1152 : 576;
-    var budget = Math.max(spf, Math.round(frameCount / spf) * spf);
-    return new Blob([truncateMp3Frames(legacy, budget)], {type:'audio/mpeg'});
+    var trimmed = trimMp3ToLength(raw, frameCount);
+    if(onProgress) onProgress(1);
+    return new Blob([trimmed], {type:'audio/mpeg'});
   }
 
   // Concatenate the segments in the current order into one AudioBuffer.
