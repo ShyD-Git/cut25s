@@ -377,7 +377,7 @@ button{font-family:inherit}
     <div class="outfmt">
       <div class="outfmt-head">
         <label>Chia đoạn theo mốc giờ</label>
-        <span>Định dạng 00:00:00,00</span>
+        <span>Chỉ gõ số — trang tự chèn : và ,</span>
       </div>
       <div class="count-row">
         <span class="count-label">Số đoạn</span>
@@ -394,7 +394,7 @@ button{font-family:inherit}
         <button class="btn btn-outline btn-sm" id="equalBtn" type="button">↔ Chia đều theo độ dài bài</button>
         <button class="btn btn-accent btn-sm" id="applySegBtn" type="button">✓ Áp dụng mốc giờ</button>
       </div>
-      <p class="dur-hint">Anh nhập <b>giờ kết thúc</b> cho từng đoạn theo dạng <b>00:00:25,00</b> (giờ:phút:giây,phần trăm giây), hoặc chỉnh <b>ô Độ dài</b> ngay dưới mỗi đoạn: gõ thẳng số giây, hoặc bấm nút <b>− / +</b> để giảm / tăng độ dài đoạn đó từng <b>1 giây</b>. Đoạn sau <b>tự bắt đầu sau đoạn trước 0,01s</b> — ví dụ đoạn 1 kết thúc <b>00:00:25,00</b> thì đoạn 2 tự bắt đầu <b>00:00:25,01</b>, cứ thế cho các đoạn tiếp theo. Chọn file xong trang tự chia đều 3 đoạn trước để Anh sửa lại mốc giờ theo ý.</p>
+      <p class="dur-hint">Anh nhập <b>giờ kết thúc</b> cho từng đoạn: <b>chỉ cần gõ số liên tục</b>, trang <b>tự chèn dấu : và ,</b> — ví dụ gõ <b>004500</b> là thành <b>00:00:45,00</b> (giờ:phút:giây,phần trăm giây), khỏi bấm dấu : trên bàn phím; bấm <b>xoá</b> là lùi từng số, bấm <b>Delete</b> là về 00:00:00,00. Hoặc chỉnh <b>ô Độ dài</b> ngay dưới mỗi đoạn: gõ thẳng số giây, hoặc bấm nút <b>− / +</b> để giảm / tăng độ dài đoạn đó từng <b>1 giây</b>. Đoạn sau <b>tự bắt đầu sau đoạn trước 0,01s</b> — ví dụ đoạn 1 kết thúc <b>00:00:25,00</b> thì đoạn 2 tự bắt đầu <b>00:00:25,01</b>, cứ thế cho các đoạn tiếp theo. Chọn file xong trang tự chia đều 3 đoạn trước để Anh sửa lại mốc giờ theo ý.</p>
     </div>
   </section>
 
@@ -509,7 +509,7 @@ button{font-family:inherit}
   </div>
   <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra đúng độ dài từng mẫu âm thanh nên đưa vào CapCut không bị dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V7 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V8 · 18/11/2026</p>
   </footer>
 </div>
 
@@ -722,6 +722,74 @@ button{font-family:inherit}
     }
     return Math.round(total * 100) / 100;
   }
+  // Digits-only time entry for the HH:MM:SS,CC fields: the field keeps an
+  // 8-digit buffer (HHMMSSCC) displayed with the separators auto-inserted,
+  // so Anh only taps digits — typing 004500 fills 00:00:45,00 without ever
+  // hunting for ":" or "," on the phone keyboard. Each new digit shifts
+  // the buffer left and appends; Backspace drops the last digit; Delete
+  // clears the field back to 00:00:00,00.
+  function attachTimeMask(input){
+    var buf = null;      // 8-digit string while the field is being edited
+    var applying = false;
+    function fmtBuf(d){ return d.slice(0,2) + ':' + d.slice(2,4) + ':' + d.slice(4,6) + ',' + d.slice(6,8); }
+    function digitsOf(str){
+      var d = String(str || '').replace(/\D/g, '').slice(-8);
+      while(d.length < 8) d = '0' + d;
+      return d;
+    }
+    function apply(){
+      applying = true;
+      input.value = fmtBuf(buf);
+      // Notify the field's existing input handlers (live parse + chaining).
+      input.dispatchEvent(new Event('input', { bubbles:true }));
+      applying = false;
+    }
+    input.addEventListener('focus', function(){
+      buf = digitsOf(input.value);
+      if(input.value) input.value = fmtBuf(buf);
+      setTimeout(function(){ try{ input.setSelectionRange(input.value.length, input.value.length); }catch(e){} }, 0);
+    });
+    input.addEventListener('blur', function(){ buf = null; });
+    input.addEventListener('keydown', function(e){
+      if(e.metaKey || e.ctrlKey || e.altKey) return;
+      if(/^[0-9]$/.test(e.key)){
+        e.preventDefault();
+        if(buf == null) buf = digitsOf(input.value);
+        buf = (buf + e.key).slice(-8);
+        apply();
+      } else if(e.key === 'Backspace'){
+        e.preventDefault();
+        if(buf == null) buf = digitsOf(input.value);
+        buf = ('0' + buf).slice(0, 8);
+        apply();
+      } else if(e.key === 'Delete'){
+        e.preventDefault();
+        buf = '00000000';
+        apply();
+      } else if(e.key === ':' || e.key === ',' || e.key === '.'){
+        e.preventDefault(); // separators are inserted automatically
+      }
+    });
+    // Fallback for keyboards that bypass keydown (some mobile IMEs):
+    // rebuild the buffer from whatever digits ended up in the field.
+    input.addEventListener('input', function(){
+      if(applying || buf == null) return;
+      if(input.value !== fmtBuf(buf)){
+        buf = digitsOf(input.value);
+        apply();
+      }
+    });
+    input.addEventListener('paste', function(e){
+      e.preventDefault();
+      var text = '';
+      try{ text = (e.clipboardData || window.clipboardData).getData('text'); }catch(err){}
+      var v = parseHMS(text);
+      if(!isNaN(v)){
+        buf = digitsOf(formatHMS(v));
+        apply();
+      }
+    });
+  }
   // Start of each segment: segment 1 starts at segStart0; every later
   // segment starts exactly GAP (0,01s) after the previous segment ends.
   function segStarts(){
@@ -820,9 +888,9 @@ button{font-family:inherit}
           '<div class="sd-head"><span class="sd-num">' + (i + 1) + '</span><strong>Đoạn ' + (i + 1) + '</strong>' +
           '<span class="sd-dur">' + (dur != null && dur > 0 ? 'dài ' + dur.toFixed(2).replace('.', ',') + ' giây' : 'chưa đủ mốc giờ') + '</span></div>' +
           '<div class="sd-times">' +
-            '<label class="sd-field"><span>Bắt đầu</span><input class="sd-input sd-start" type="text" value="' + formatHMS(starts[i]) + '"' + (i === 0 ? '' : ' readonly') + ' aria-label="Giờ bắt đầu đoạn ' + (i + 1) + '"></label>' +
+            '<label class="sd-field"><span>Bắt đầu</span><input class="sd-input sd-start" type="text" inputmode="numeric" value="' + formatHMS(starts[i]) + '"' + (i === 0 ? '' : ' readonly') + ' aria-label="Giờ bắt đầu đoạn ' + (i + 1) + '"></label>' +
             '<span class="sd-arrow">→</span>' +
-            '<label class="sd-field"><span>Kết thúc</span><input class="sd-input sd-end" type="text" value="' + endVal + '" placeholder="00:00:25,00" autocomplete="off" aria-label="Giờ kết thúc đoạn ' + (i + 1) + '"></label>' +
+            '<label class="sd-field"><span>Kết thúc</span><input class="sd-input sd-end" type="text" inputmode="numeric" value="' + endVal + '" placeholder="Gõ số: 00002500" autocomplete="off" aria-label="Giờ kết thúc đoạn ' + (i + 1) + '"></label>' +
           '</div>' +
           durHtml +
           (i === 0
@@ -831,6 +899,9 @@ button{font-family:inherit}
         segDefList.appendChild(row);
         var startInput = row.querySelector('.sd-start');
         var endInput = row.querySelector('.sd-end');
+        // Digits-only entry: typing digits auto-inserts ":" and ",".
+        if(i === 0 && startInput) attachTimeMask(startInput);
+        attachTimeMask(endInput);
         if(i === 0 && startInput){
           startInput.addEventListener('change', function(){
             var v = parseHMS(startInput.value);
