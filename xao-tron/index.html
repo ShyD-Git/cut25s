@@ -377,7 +377,7 @@ button{font-family:inherit}
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
       <span class="pill">Chia <b id="pillSeg">3 đoạn</b> · nối cách <b>0,01s</b></span>
       <span class="pill">Xuất <b>MP3</b> / <b>WAV</b></span>
-      <span class="pill">Lưu qua <b>menu Chia sẻ</b></span>
+      <span class="pill" id="savePill">Lưu qua <b>menu Chia sẻ</b></span>
     </div>
   </header>
 
@@ -529,11 +529,11 @@ button{font-family:inherit}
   <div class="how">
     <div><b>1. Chọn nhạc &amp; nhập mốc giờ</b><p>Nghe thử bài gốc, tua tới mốc cần cắt rồi nhập giờ kết thúc cho từng đoạn — đoạn sau tự bắt đầu sau đoạn trước 0,01s.</p></div>
     <div><b>2. Xáo trộn, sắp xếp, xoá đoạn</b><p>Bấm xáo trộn ngẫu nhiên, bấm ▲ ▼ để tự tay dời từng đoạn, hoặc bấm ✕ trên đoạn không cần (ví dụ đoạn ở giữa) để loại nó khỏi bài ghép — thêm lại được bất cứ lúc nào.</p></div>
-    <div><b>3. Ghép &amp; lưu</b><p>Nghe thử bài ghép ngay trên trang (kéo thanh tua hoặc bấm −10s / +10s), ưng ý thì bấm Chia sẻ → “Lưu vào Tệp”. Cần lấy riêng 1 đoạn thì bấm nút “Chia sẻ đoạn N” ngay trên thẻ đoạn đó.</p></div>
+    <div><b>3. Ghép &amp; lưu</b><p id="howSaveText">Nghe thử bài ghép ngay trên trang (kéo thanh tua hoặc bấm −10s / +10s), ưng ý thì bấm Chia sẻ → “Lưu vào Tệp”. Cần lấy riêng 1 đoạn thì bấm nút “Chia sẻ đoạn N” ngay trên thẻ đoạn đó.</p></div>
   </div>
   <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra được cắt theo số frame gần nhất với độ dài thật (lệch tối đa khoảng 0,01 giây) nên đưa vào CapCut không bị thừa đoạn trống ở đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V13 · 25/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V14 · 25/11/2026</p>
   </footer>
 </div>
 
@@ -609,6 +609,21 @@ button{font-family:inherit}
   var outFormat = 'mp3';
   var mp3Bitrate = 128;
   var inputExt = '';
+
+  // Platform split for the save buttons: on a desktop PC (Windows/macOS —
+  // mouse/trackpad as the primary pointer) the Web Share sheet does not
+  // work reliably, so the buttons download the file directly instead. On
+  // touch devices (phones/tablets) they keep opening the native share
+  // sheet, which is how files are saved on iOS/Android.
+  var isDesktopPC = (function(){
+    try{
+      var ua = navigator.userAgent || '';
+      if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return false;
+      if(window.matchMedia) return window.matchMedia('(pointer: fine)').matches;
+      return !('ontouchstart' in window);
+    }catch(e){ return false; }
+  })();
+  function saveActionLabel(){ return isDesktopPC ? '⬇ Tải về' : '⬆ Chia sẻ'; }
 
   var namePrefixInput = document.getElementById('namePrefix');
   var namePreviewEl = document.getElementById('namePreview');
@@ -1127,7 +1142,7 @@ button{font-family:inherit}
     return '';
   }
   function refreshShareLabel(){
-    shareMergedBtn.textContent = '⬆ Chia sẻ bài ghép (.' + outFormat + ')';
+    shareMergedBtn.textContent = saveActionLabel() + ' bài ghép (.' + outFormat + ')';
   }
   function refreshSegShareLabels(){
     if(!segmentList) return;
@@ -1135,7 +1150,7 @@ button{font-family:inherit}
     for(var i=0;i<btns.length;i++){
       if(btns[i].disabled) continue;
       var idx = parseInt(btns[i].getAttribute('data-seg-share'), 10);
-      if(!isNaN(idx)) btns[i].textContent = '⬆ Chia sẻ đoạn ' + (idx + 1) + ' (.' + outFormat + ')';
+      if(!isNaN(idx)) btns[i].textContent = saveActionLabel() + ' đoạn ' + (idx + 1) + ' (.' + outFormat + ')';
     }
   }
   function setFormat(f){
@@ -1450,7 +1465,7 @@ button{font-family:inherit}
     ensureCtx();
     stopAllPlayback();
     hideStatus();
-    var originalLabel = '⬆ Chia sẻ đoạn ' + (segIdx + 1) + ' (.' + outFormat + ')';
+    var originalLabel = saveActionLabel() + ' đoạn ' + (segIdx + 1) + ' (.' + outFormat + ')';
     btn.disabled = true;
     try{
       btn.textContent = 'Đang cắt đoạn ' + (segIdx + 1) + '…';
@@ -1468,11 +1483,11 @@ button{font-family:inherit}
         });
         encBlob = wavBlob; encExt = 'wav';
       }
-      btn.textContent = 'Đang mở chia sẻ đoạn ' + (segIdx + 1) + '…';
+      btn.textContent = isDesktopPC ? ('Đang chuẩn bị tải đoạn ' + (segIdx + 1) + '…') : ('Đang mở chia sẻ đoạn ' + (segIdx + 1) + '…');
       await nextFrame();
       var name = pad(segIdx + 1) + '-' + origBaseName() + '.' + encExt;
       var file = new File([encBlob], name, { type: encBlob.type });
-      if(canShareFiles([file])){
+      if(!isDesktopPC && canShareFiles([file])){
         try{
           await navigator.share({ files: [file] });
         }catch(err){
@@ -1949,8 +1964,8 @@ button{font-family:inherit}
       shareSegBtn.className = 'btn btn-accent seg-share-btn';
       shareSegBtn.type = 'button';
       shareSegBtn.setAttribute('data-seg-share', String(seg.index));
-      shareSegBtn.textContent = '⬆ Chia sẻ đoạn ' + (seg.index + 1) + ' (.' + outFormat + ')';
-      shareSegBtn.setAttribute('aria-label', 'Chia sẻ riêng đoạn gốc ' + (seg.index + 1));
+      shareSegBtn.textContent = saveActionLabel() + ' đoạn ' + (seg.index + 1) + ' (.' + outFormat + ')';
+      shareSegBtn.setAttribute('aria-label', (isDesktopPC ? 'Tải về riêng đoạn gốc ' : 'Chia sẻ riêng đoạn gốc ') + (seg.index + 1));
       (function(btnRef, idx){
         btnRef.addEventListener('click', function(){ shareSegment(idx, btnRef); });
       })(shareSegBtn, seg.index);
@@ -2117,7 +2132,7 @@ button{font-family:inherit}
         });
         enc = { blob: wavBlob, ext: 'wav' };
       }
-      setWorkProgress(100, 'Ghép xong — đang mở menu chia sẻ…');
+      setWorkProgress(100, isDesktopPC ? 'Ghép xong — đang tải file về máy…' : 'Ghép xong — đang mở menu chia sẻ…');
       await new Promise(function(r){ setTimeout(r, 250); });
     }catch(err){
       console.error(err);
@@ -2134,7 +2149,7 @@ button{font-family:inherit}
     refreshShareLabel();
     var name = mergedName(enc.ext);
     var file = new File([enc.blob], name, { type: enc.blob.type });
-    if(canShareFiles([file])){
+    if(!isDesktopPC && canShareFiles([file])){
       try{
         // No title/text: iOS turns a share title into an extra .txt file
         // when the user picks "Save to Files".
@@ -2291,6 +2306,12 @@ button{font-family:inherit}
   }
 
   // Init
+  if(isDesktopPC){
+    var savePillEl = document.getElementById('savePill');
+    if(savePillEl) savePillEl.innerHTML = 'Lưu bằng <b>nút Tải về</b>';
+    var howSaveEl = document.getElementById('howSaveText');
+    if(howSaveEl) howSaveEl.textContent = 'Nghe thử bài ghép ngay trên trang (kéo thanh tua hoặc bấm −10s / +10s), ưng ý thì bấm Tải về để lưu file thẳng về máy. Cần lấy riêng 1 đoạn thì bấm nút “Tải về đoạn N” ngay trên thẻ đoạn đó.';
+  }
   renderSegDefs();
   updateSegLabels();
   setFormat('mp3');

@@ -311,7 +311,7 @@ a.vibe-item:active{background:var(--surface-2)}
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
       <span class="pill">Đoạn <b id="pillSeg">25s</b> · cách <b>0,01s</b></span>
       <span class="pill"><b>MP3</b> / <b>WAV</b></span>
-      <span class="pill">Lưu qua <b>menu Chia sẻ</b></span>
+      <span class="pill" id="pillSave">Lưu qua <b>menu Chia sẻ</b></span>
     </div>
   </header>
 
@@ -403,7 +403,7 @@ a.vibe-item:active{background:var(--surface-2)}
   <div class="toolbar" id="toolbar">
     <div>
       <h2>Danh sách đoạn</h2>
-      <p id="toolbarSub">Bấm nút phát để nghe thử, Chia sẻ để lưu từng đoạn.</p>
+      <p id="toolbarSub">Bấm nút phát để nghe thử, bấm nút ở từng đoạn để lưu đoạn đó.</p>
     </div>
     <div class="toolbar-actions">
       <button class="btn btn-outline" id="stopBtn" type="button">■ Dừng phát</button>
@@ -416,11 +416,11 @@ a.vibe-item:active{background:var(--surface-2)}
   <div class="how">
     <div><b>1. Chọn nhạc</b><p>Bấm chọn file hoặc kéo thả vào trang.</p></div>
     <div><b id="howTitle">2. Tự cắt 25s</b><p id="howText">Mỗi đoạn 25s, đoạn sau trễ hơn 0,01s. Đoạn cuối lấy phần còn lại.</p></div>
-    <div><b>3. Chia sẻ để lưu</b><p>Bấm Chia sẻ ở từng đoạn, chọn “Lưu vào Tệp”. Đóng menu là quay lại trang ngay.</p></div>
+    <div><b id="howSaveTitle">3. Chia sẻ để lưu</b><p id="howSaveText">Bấm Chia sẻ ở từng đoạn, chọn “Lưu vào Tệp”. Đóng menu là quay lại trang ngay.</p></div>
   </div>
   <p class="note">File dài thì lần cắt đầu lâu hơn vài giây. Đoạn MP3 đã cắt đúng độ dài từng đoạn nên ghép vào CapCut không còn dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: CN25S-V17 · 25/11/2026</p>
+    <p class="upd">Mã cập nhật: CN25S-V18 · 25/11/2026</p>
   </footer>
 </div>
 
@@ -453,6 +453,24 @@ a.vibe-item:active{background:var(--surface-2)}
   var segments = []; // {index, start, end, duration}
   var hasCustomSeg = false; // true once a per-segment duration edit is applied
   var playing = { source:null, index:-1, timer:null, btn:null, raf:null, prog:null, startedAt:0, scrubbing:false };
+
+  // Desktop PCs (Windows/macOS): the Web Share sheet is unreliable there —
+  // Chrome on Windows claims file sharing works, but the sheet often does
+  // nothing when a file is shared. So on PC the buttons skip the share
+  // sheet entirely and download the file directly, and their labels say
+  // "Tải về" instead of "Chia sẻ". Phones/tablets keep the share flow.
+  var isPC = (function(){
+    var ua = navigator.userAgent || '';
+    if(/Android|iPhone|iPad|iPod|Windows Phone|Mobile/i.test(ua)) return false;
+    // Touch-first devices that pose as desktop (e.g. iPad "Macintosh" UA):
+    // coarse primary pointer and no fine pointer means not a PC.
+    if(window.matchMedia
+      && window.matchMedia('(pointer: coarse)').matches
+      && !window.matchMedia('(pointer: fine)').matches) return false;
+    return true;
+  })();
+  var dlVerb = isPC ? 'Tải về' : 'Chia sẻ';
+  var dlIcon = isPC ? '⬇' : '⬆';
 
   // Play / Pause glyphs on a 24 grid with their bounding boxes centred on
   // (12,12); the button also absolute-centres the SVG itself, so both icons
@@ -502,7 +520,7 @@ a.vibe-item:active{background:var(--surface-2)}
     var labels = segmentList.querySelectorAll('.seg-file');
     for(var i=0;i<labels.length;i++){
       var idx = parseInt(labels[i].getAttribute('data-idx'), 10) || 0;
-      labels[i].textContent = '⬆ ' + shortName(idx);
+      labels[i].textContent = dlIcon + ' ' + shortName(idx);
     }
   }
   if(namePrefixInput){
@@ -534,7 +552,7 @@ a.vibe-item:active{background:var(--surface-2)}
     if(titleSegEl) titleSegEl.textContent = l;
     if(pillSegEl) pillSegEl.textContent = s;
     if(statSegEl) statSegEl.textContent = hasCustomSeg ? 'Từng đoạn / 0,01s' : s + ' / 0,01s';
-    if(introTextEl) introTextEl.textContent = 'Chọn 1 file nhạc — trang tự cắt thành các đoạn ' + l + ', cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới, hoặc chỉnh dài riêng từng đoạn trong danh sách. Nghe thử rồi bấm Chia sẻ để lưu.';
+    if(introTextEl) introTextEl.textContent = 'Chọn 1 file nhạc — trang tự cắt thành các đoạn ' + l + ', cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới, hoặc chỉnh dài riêng từng đoạn trong danh sách. Nghe thử rồi bấm ' + dlVerb + ' để lưu.';
     if(howTitleEl) howTitleEl.textContent = '2. Tự cắt ' + s;
     if(howTextEl) howTextEl.textContent = 'Mỗi đoạn ' + s + ', đoạn sau trễ hơn 0,01s. Đoạn cuối lấy phần còn lại.';
     for(var i=0;i<durPresetBtns.length;i++){
@@ -707,10 +725,10 @@ a.vibe-item:active{background:var(--surface-2)}
   }
 
   function refreshDownloadLabels(){
-    downloadAllBtn.textContent = '⬆ Chia sẻ tất cả (.' + outFormat + ')';
+    downloadAllBtn.textContent = dlIcon + ' ' + dlVerb + ' tất cả (.' + outFormat + ')';
     var btns = segmentList.querySelectorAll('.dl-btn');
     for(var i=0;i<btns.length;i++){
-      btns[i].textContent = '⬆ Chia sẻ đoạn ' + (i+1) + ' (.' + outFormat + ')';
+      btns[i].textContent = dlIcon + ' ' + dlVerb + ' đoạn ' + (i+1) + ' (.' + outFormat + ')';
     }
   }
 
@@ -1034,6 +1052,8 @@ a.vibe-item:active{background:var(--surface-2)}
   }
 
   function canShareFiles(files){
+    // Never even try the share sheet on PC — go straight to download.
+    if(isPC) return false;
     try{
       return !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
     }catch(e){ return false; }
@@ -1182,7 +1202,7 @@ a.vibe-item:active{background:var(--surface-2)}
       main.className='seg-main';
       var isShort = seg.duration < SEG - 0.05;
       var isLast = seg.index === segments.length - 1;
-      main.innerHTML = '<strong>Đoạn '+(seg.index+1)+ (isShort && isLast ? ' — đoạn cuối' : '') +'</strong><span>'+timeCode(seg.start)+' → '+timeCode(seg.end)+' &nbsp;•&nbsp; '+seg.duration.toFixed(2)+' giây</span><span class="seg-file" data-idx="'+seg.index+'">⬆ '+shortName(seg.index)+'</span>';
+      main.innerHTML = '<strong>Đoạn '+(seg.index+1)+ (isShort && isLast ? ' — đoạn cuối' : '') +'</strong><span>'+timeCode(seg.start)+' → '+timeCode(seg.end)+' &nbsp;•&nbsp; '+seg.duration.toFixed(2)+' giây</span><span class="seg-file" data-idx="'+seg.index+'">'+dlIcon+' '+shortName(seg.index)+'</span>';
 
       var badge = document.createElement('span');
       badge.className = 'seg-badge' + (isShort ? ' short' : '');
@@ -1201,7 +1221,7 @@ a.vibe-item:active{background:var(--surface-2)}
       var dlBtn = document.createElement('button');
       dlBtn.className='dl-btn';
       dlBtn.type='button';
-      dlBtn.textContent='⬆ Chia sẻ đoạn '+(seg.index+1)+' (.'+outFormat+')';
+      dlBtn.textContent=dlIcon+' '+dlVerb+' đoạn '+(seg.index+1)+' (.'+outFormat+')';
       dlBtn.addEventListener('click', function(){ shareSegment(seg.index, dlBtn); });
 
       actions.appendChild(playBtn);
@@ -1441,6 +1461,17 @@ a.vibe-item:active{background:var(--surface-2)}
     }
     next();
   });
+
+  // On PC the save flow is a plain download, so the static copy that talks
+  // about the share sheet is swapped for download wording.
+  if(isPC){
+    var pillSave = document.getElementById('pillSave');
+    if(pillSave) pillSave.innerHTML = 'Trên PC: <b>tải về trực tiếp</b>';
+    var howSaveTitle = document.getElementById('howSaveTitle');
+    if(howSaveTitle) howSaveTitle.textContent = '3. Tải về để lưu';
+    var howSaveText = document.getElementById('howSaveText');
+    if(howSaveText) howSaveText.textContent = 'Bấm Tải về ở từng đoạn — file tải thẳng xuống máy, không qua menu chia sẻ.';
+  }
 
   // Initialise selector UI — default MP3 at 128k, default segment 25s
   updateDurationLabels();

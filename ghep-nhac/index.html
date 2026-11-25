@@ -315,7 +315,7 @@ button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
       <span class="pill">Ghép <b>nhiều file</b> → <b>1 bài</b></span>
       <span class="pill">Xuất <b>MP3</b> / <b>WAV</b></span>
-      <span class="pill">Lưu qua <b>menu Chia sẻ</b></span>
+      <span class="pill" id="savePill">Lưu qua <b>menu Chia sẻ</b></span>
     </div>
   </header>
 
@@ -453,11 +453,11 @@ button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]
   <div class="how">
     <div><b>1. Chọn nhiều file nhạc</b><p>Bấm chọn một lần nhiều file hoặc kéo thả vào trang — thêm dần từng đợt cũng được, file mới nối vào cuối danh sách.</p></div>
     <div><b>2. Sắp xếp thứ tự</b><p>Dùng nút ▲ ▼ (hoặc kéo thẻ trên máy tính) để đổi thứ tự, bấm ▶ nghe thử từng file, bấm ✕ để bỏ file không cần khỏi bài ghép.</p></div>
-    <div><b>3. Ghép &amp; lưu</b><p>Chọn cách nối (khoảng lặng hoặc chuyển mượt), nghe thử bài ghép ngay trên trang, ưng ý thì bấm Chia sẻ → “Lưu vào Tệp”.</p></div>
+    <div><b>3. Ghép &amp; lưu</b><p id="howSaveText">Chọn cách nối (khoảng lặng hoặc chuyển mượt), nghe thử bài ghép ngay trên trang, ưng ý thì bấm Chia sẻ → “Lưu vào Tệp”.</p></div>
   </div>
   <p class="note">Các file khác nhau về định dạng, số kênh hay tần số mẫu đều được trang tự quy về cùng một chuẩn trước khi ghép. File MP3 xuất ra được cắt theo số frame gần nhất với độ dài thật (lệch tối đa khoảng 0,01 giây) nên đưa vào CapCut không bị thừa đoạn trống ở đuôi. Bài ghép rất dài (nhiều chục phút) sẽ tốn nhiều RAM lúc xử lý — nếu trang bị tải lại, Anh chia ra ghép từng đợt ngắn hơn.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: GN-V1 · 21/11/2026</p>
+    <p class="upd">Mã cập nhật: GN-V2 · 25/11/2026</p>
   </footer>
 </div>
 
@@ -519,6 +519,29 @@ button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]
 
   var namePrefixInput = document.getElementById('namePrefix');
   var namePreviewEl = document.getElementById('namePreview');
+  var savePillEl = document.getElementById('savePill');
+  var howSaveTextEl = document.getElementById('howSaveText');
+
+  // PC (Windows / macOS / Linux desktop) has no useful file Share sheet —
+  // Chrome/Edge on Windows either lacks navigator.share for files or the
+  // sheet silently does nothing, which is the bug Anh reported. On PC the
+  // button therefore becomes a direct Download button; phones/tablets keep
+  // the Share sheet so "Lưu vào Tệp" still works there.
+  var isDesktopPC = (function(){
+    try{
+      var ua = navigator.userAgent || '';
+      if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return false;
+      if(/Windows NT/i.test(ua)) return true;
+      // iPad Safari masquerades as Macintosh but has multi-touch — keep Share there.
+      if(/Macintosh|Mac OS X/i.test(ua)) return !(navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+      if(/Linux x86_64|X11; Linux|CrOS/i.test(ua)) return true;
+      var platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
+      if(/Win/i.test(platform)) return true;
+      if(/Mac/i.test(platform)) return !(navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+      if(window.matchMedia && window.matchMedia('(pointer: fine)').matches && !(navigator.maxTouchPoints && navigator.maxTouchPoints > 0)) return true;
+    }catch(e){}
+    return false;
+  })();
 
   function pad(n){ return (n<10?'0':'')+n; }
   function fmt(sec){
@@ -551,7 +574,11 @@ button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]
   }
   function refreshNamePreview(){
     if(namePreviewEl) namePreviewEl.textContent = mergedName();
-    if(shareMergedBtn) shareMergedBtn.textContent = '⬆ Chia sẻ bài ghép (.' + outFormat + ')';
+    if(shareMergedBtn) shareMergedBtn.textContent = (isDesktopPC ? '⬇ Tải về bài ghép (.' : '⬆ Chia sẻ bài ghép (.') + outFormat + ')';
+    if(savePillEl) savePillEl.innerHTML = isDesktopPC ? 'Tải về <b>trực tiếp</b> trên máy tính' : 'Lưu qua <b>menu Chia sẻ</b>';
+    if(howSaveTextEl) howSaveTextEl.textContent = isDesktopPC
+      ? 'Chọn cách nối (khoảng lặng hoặc chuyển mượt), nghe thử bài ghép ngay trên trang, ưng ý thì bấm Tải về — file sẽ tải thẳng xuống máy tính.'
+      : 'Chọn cách nối (khoảng lặng hoặc chuyển mượt), nghe thử bài ghép ngay trên trang, ưng ý thì bấm Chia sẻ → “Lưu vào Tệp”.';
   }
   if(namePrefixInput) namePrefixInput.addEventListener('input', refreshNamePreview);
 
@@ -1421,12 +1448,13 @@ button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]
         });
         ext = 'wav';
       }
-      setWorkProgress(100, 'Đã ghép xong — đang mở nơi lưu…');
+      setWorkProgress(100, isDesktopPC ? 'Đã ghép xong — đang tải về…' : 'Đã ghép xong — đang mở nơi lưu…');
       var filename = mergedName(ext);
       var file = null;
       try{ file = new File([blob], filename, { type: blob.type }); }catch(e){}
       var shared = false;
-      if(file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] })){
+      // On PC skip the Share sheet entirely and download directly.
+      if(!isDesktopPC && file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] })){
         try{
           await navigator.share({ files: [file] });
           shared = true;
@@ -1436,7 +1464,7 @@ button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]
       }
       if(!shared) downloadBlob(blob, filename);
       setWorkProgress(null);
-      showStatus('Đã ghép xong ' + tracks.length + ' file thành 1 bài dài ' + fmtTotal(buf.duration) + ' — file ' + filename + ' (' + fmtSize(blob.size) + ').', 'loading');
+      showStatus('Đã ghép xong ' + tracks.length + ' file thành 1 bài dài ' + fmtTotal(buf.duration) + ' — file ' + filename + ' (' + fmtSize(blob.size) + ')' + (isDesktopPC ? ' đã tải về máy.' : '.'), 'loading');
     }catch(err){
       setWorkProgress(null);
       showStatus('Ghép bị lỗi: ' + (err && err.message ? err.message : err), 'error');
