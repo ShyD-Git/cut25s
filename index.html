@@ -160,6 +160,17 @@ button{font-family:inherit}
 @media(prefers-color-scheme: dark){.sp-knob{border-color:#dceefb;box-shadow:0 1px 5px rgba(0,0,0,.6)}}
 .sp-time{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted);white-space:nowrap}
 
+/* Per-segment duration editor (inside each segment card) */
+.seg-edit{display:flex;flex:1 0 100%;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;padding-top:10px;border-top:1px dashed var(--line)}
+.se-label{font-size:12.5px;font-weight:700;color:var(--muted);margin-right:2px}
+.se-step{min-height:36px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-weight:700;font-size:12.5px;cursor:pointer;font-family:"JetBrains Mono",monospace}
+.se-step:active{border-color:var(--accent);color:var(--accent)}
+.se-input{width:74px;min-height:36px;padding:6px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);font-family:inherit;font-size:13.5px;font-weight:600;text-align:center;min-width:0}
+.se-input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.se-unit{font-size:12.5px;color:var(--muted);font-weight:600}
+.se-apply{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+.se-apply:active{background:var(--accent-strong)}
+
 /* Credit under the title + update code at page bottom */
 .vibe{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
 .vibe-toggle{
@@ -295,7 +306,7 @@ a.vibe-item:active{background:var(--surface-2)}
       <a class="vibe-item" href="https://shyd-git.github.io/cut25s/xao-tron/">Xáo Trộn Nhạc <span class="vi-arrow">→</span></a>
       <a class="vibe-item" href="https://shyd-git.github.io/cut25s/cat-video/">Cắt Video <span class="vi-arrow">→</span></a>
     </nav>
-    <p id="introText">Chọn 1 file nhạc — trang tự cắt thành các đoạn 25 giây, cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới nếu muốn. Nghe thử rồi bấm Chia sẻ để lưu.</p>
+    <p id="introText">Chọn 1 file nhạc — trang tự cắt thành các đoạn 25 giây, cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới, hoặc chỉnh dài riêng từng đoạn trong danh sách. Nghe thử rồi bấm Chia sẻ để lưu.</p>
     <div class="meta-row">
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
       <span class="pill">Đoạn <b id="pillSeg">25s</b> · cách <b>0,01s</b></span>
@@ -336,7 +347,7 @@ a.vibe-item:active{background:var(--surface-2)}
         <button class="btn btn-accent btn-sm" id="durApply" type="button">Áp dụng</button>
         <button class="btn btn-outline btn-sm" id="durReset" type="button">Về 25s</button>
       </div>
-      <p class="dur-hint">Không cài gì thì vẫn cắt <b>25s/đoạn</b>. Nhập được số lẻ như <b>36,8s</b> (gõ 36,8 hoặc 36.8 đều được). Chọn trước khi nạp file hoặc đổi sau cũng được — trang <b>cắt lại ngay</b>, khoảng cách giữa 2 đoạn vẫn giữ <b>0,01s</b>.</p>
+      <p class="dur-hint">Không cài gì thì vẫn cắt <b>25s/đoạn</b>. Nhập được số lẻ như <b>36,8s</b> (gõ 36,8 hoặc 36.8 đều được) và <b>không giới hạn tối đa</b> — nhập bao nhiêu giây cũng được, kể cả trên 600s như 900s, 1800s. Chọn trước khi nạp file hoặc đổi sau cũng được — trang <b>cắt lại ngay</b>, khoảng cách giữa 2 đoạn vẫn giữ <b>0,01s</b>. Muốn <b>mỗi đoạn một độ dài riêng</b> thì chỉnh ngay trong từng thẻ đoạn bên dưới, dòng <b>“Dài đoạn này”</b> — đoạn kế tiếp tự co/giãn theo, giống trang Xáo Trộn.</p>
     </div>
   </section>
 
@@ -377,14 +388,14 @@ a.vibe-item:active{background:var(--surface-2)}
     </div>
     <div class="renamefmt">
       <div class="outfmt-head">
-        <label for="namePrefix">Tên file khi lưu — ngắn gọn</label>
-        <span>Không kèm tên file gốc</span>
+        <label for="namePrefix">Tên file khi lưu</label>
+        <span>Dạng số thứ tự – tên file gốc</span>
       </div>
       <div class="rename-row">
-        <input class="rename-input" id="namePrefix" type="text" maxlength="40" placeholder="Để trống = chỉ số: 01, 02, 03…" autocomplete="off" autocapitalize="off" spellcheck="false" />
-        <div class="name-preview" id="namePreview">01.mp3 · 02.mp3 · 03.mp3…</div>
+        <input class="rename-input" id="namePrefix" type="text" maxlength="40" placeholder="Để trống = dùng tên file gốc" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <div class="name-preview" id="namePreview">01-tên file gốc.mp3 · 02-tên file gốc.mp3…</div>
       </div>
-      <p class="rename-hint">Để trống: <b>01.mp3</b>, <b>02.mp3</b>… Gõ tên ngắn (vd <b>nhac</b>): <b>nhac-01.mp3</b>, <b>nhac-02.mp3</b>…</p>
+      <p class="rename-hint">Để trống: file gốc <b>Luu Nien.mp3</b> → các đoạn là <b>01-Luu Nien.mp3</b>, <b>02-Luu Nien.mp3</b>… Gõ tên khác vào ô trên (vd <b>nhac</b>) thì thành <b>01-nhac.mp3</b>, <b>02-nhac.mp3</b>…</p>
     </div>
   </section>
 
@@ -409,7 +420,7 @@ a.vibe-item:active{background:var(--surface-2)}
   </div>
   <p class="note">File dài thì lần cắt đầu lâu hơn vài giây. Đoạn MP3 đã cắt đúng độ dài từng đoạn nên ghép vào CapCut không còn dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: CN25S-V15 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: CN25S-V17 · 25/11/2026</p>
   </footer>
 </div>
 
@@ -440,6 +451,7 @@ a.vibe-item:active{background:var(--surface-2)}
   var currentBuffer = null;
   var currentFile = null;
   var segments = []; // {index, start, end, duration}
+  var hasCustomSeg = false; // true once a per-segment duration edit is applied
   var playing = { source:null, index:-1, timer:null, btn:null, raf:null, prog:null, startedAt:0, scrubbing:false };
 
   // Play / Pause glyphs on a 24 grid with their bounding boxes centred on
@@ -470,10 +482,18 @@ a.vibe-item:active{background:var(--surface-2)}
       .replace(/^-+|-+$/g,'')
       .slice(0,40);
   }
+  function originalBase(){
+    if(currentFile && currentFile.name) return baseName(currentFile.name);
+    return 'tên file gốc';
+  }
   function shortName(segIndex, ext){
-    var p = cleanPrefix(namePrefixInput ? namePrefixInput.value : '');
-    var num = pad(segIndex+1);
-    return (p ? p + '-' + num : num) + '.' + (ext || outFormat);
+    // Output names are "<number>-<original name>": file "Luu Nien.mp3"
+    // yields "01-Luu Nien.mp3", "02-Luu Nien.mp3"… A custom name typed in
+    // the rename box replaces the original name but keeps the same shape
+    // ("nhac" -> "01-nhac.mp3").
+    var custom = cleanPrefix(namePrefixInput ? namePrefixInput.value : '');
+    var base = custom || originalBase();
+    return pad(segIndex+1) + '-' + base + '.' + (ext || outFormat);
   }
   function refreshNamePreview(){
     if(namePreviewEl){
@@ -513,8 +533,8 @@ a.vibe-item:active{background:var(--surface-2)}
     var s = durShort(SEG), l = durLong(SEG);
     if(titleSegEl) titleSegEl.textContent = l;
     if(pillSegEl) pillSegEl.textContent = s;
-    if(statSegEl) statSegEl.textContent = s + ' / 0,01s';
-    if(introTextEl) introTextEl.textContent = 'Chọn 1 file nhạc — trang tự cắt thành các đoạn ' + l + ', cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới nếu muốn. Nghe thử rồi bấm Chia sẻ để lưu.';
+    if(statSegEl) statSegEl.textContent = hasCustomSeg ? 'Từng đoạn / 0,01s' : s + ' / 0,01s';
+    if(introTextEl) introTextEl.textContent = 'Chọn 1 file nhạc — trang tự cắt thành các đoạn ' + l + ', cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới, hoặc chỉnh dài riêng từng đoạn trong danh sách. Nghe thử rồi bấm Chia sẻ để lưu.';
     if(howTitleEl) howTitleEl.textContent = '2. Tự cắt ' + s;
     if(howTextEl) howTextEl.textContent = 'Mỗi đoạn ' + s + ', đoạn sau trễ hơn 0,01s. Đoạn cuối lấy phần còn lại.';
     for(var i=0;i<durPresetBtns.length;i++){
@@ -545,10 +565,17 @@ a.vibe-item:active{background:var(--surface-2)}
     var count = segments.length;
     if(!count) return;
     var el = document.getElementById('toolbarSub');
-    if(el) el.textContent = count + ' đoạn • ' + durShort(SEG) + '/đoạn, cách nhau 0,01s' + (segments[count-1].duration < SEG - 0.05 ? ' • đoạn cuối ' + segments[count-1].duration.toFixed(2) + 's.' : '.');
+    if(el){
+      if(hasCustomSeg){
+        el.textContent = count + ' đoạn • độ dài từng đoạn đã chỉnh riêng, cách nhau 0,01s. Bấm −/+ hoặc nhập số giây ở dòng “Dài đoạn này” để chỉnh tiếp.';
+      } else {
+        el.textContent = count + ' đoạn • ' + durShort(SEG) + '/đoạn, cách nhau 0,01s' + (segments[count-1].duration < SEG - 0.05 ? ' • đoạn cuối ' + segments[count-1].duration.toFixed(2) + 's.' : '.') + ' Chỉnh dài riêng từng đoạn ở dòng “Dài đoạn này”.';
+      }
+    }
     if(statCount) statCount.textContent = count + ' đoạn';
   }
   function recut(){
+    hasCustomSeg = false;
     if(!currentBuffer) return;
     stopPlayback();
     segments = buildSegments(currentBuffer.duration);
@@ -556,6 +583,68 @@ a.vibe-item:active{background:var(--surface-2)}
     refreshDownloadLabels();
     refreshNamePreview();
     refreshToolbarSub();
+  }
+  function durInputVal(sec){
+    var v = Math.round(sec * 100) / 100;
+    return String(v).replace('.', ',');
+  }
+  // Per-segment duration edit (like the Shuffle page): changing one
+  // segment's length moves the boundary it shares with the NEXT segment —
+  // the next segment keeps its end and absorbs the difference, so the
+  // whole file stays covered with the same 0.01s gaps. Shortening the
+  // LAST segment turns the leftover tail into a new segment.
+  function setSegmentDuration(idx, rawVal){
+    var seg = segments[idx];
+    if(!seg || !currentBuffer) return false;
+    var v = Math.round(parseDurationInput(rawVal) * 100) / 100;
+    if(!isFinite(v) || isNaN(v)){
+      showStatus('Anh nhập số giây hợp lệ cho đoạn ' + (idx+1) + ' nhé — ví dụ 20 hoặc 36,8.', 'error');
+      return false;
+    }
+    if(v < 0.5){
+      showStatus('Mỗi đoạn phải dài ít nhất 0,5 giây nhé Anh.', 'error');
+      return false;
+    }
+    var total = Math.round(currentBuffer.duration * 100) / 100;
+    var isLast = idx === segments.length - 1;
+    if(!isLast){
+      var next = segments[idx+1];
+      var newEnd = Math.round((seg.start + v) * 100) / 100;
+      var nextStart = Math.round((newEnd + GAP) * 100) / 100;
+      var nextDur = Math.round((next.end - nextStart) * 100) / 100;
+      if(nextDur < 0.5){
+        var maxV = Math.round((next.end - GAP - 0.5 - seg.start) * 100) / 100;
+        showStatus('Đoạn ' + (idx+1) + ' dài tối đa ' + maxV + 's thôi Anh — dài hơn nữa thì đoạn ' + (idx+2) + ' còn dưới 0,5s.', 'error');
+        return false;
+      }
+      stopPlayback();
+      seg.end = newEnd;
+      seg.duration = Math.round((seg.end - seg.start) * 100) / 100;
+      next.start = nextStart;
+      next.duration = nextDur;
+    } else {
+      var maxDur = Math.round((total - seg.start) * 100) / 100;
+      if(v > maxDur + 0.001){
+        showStatus('Đoạn cuối chỉ còn tối đa ' + maxDur + 's là hết bài rồi Anh.', 'error');
+        return false;
+      }
+      stopPlayback();
+      seg.end = Math.round((seg.start + v) * 100) / 100;
+      seg.duration = Math.round((seg.end - seg.start) * 100) / 100;
+      var tailStart = Math.round((seg.end + GAP) * 100) / 100;
+      if(total - tailStart >= 0.05){
+        segments.push({ index: segments.length, start: tailStart, end: total, duration: Math.round((total - tailStart) * 100) / 100 });
+      }
+    }
+    hasCustomSeg = true;
+    hideStatus();
+    for(var ri=0; ri<segments.length; ri++) segments[ri].index = ri;
+    renderSegments();
+    refreshDownloadLabels();
+    refreshNamePreview();
+    refreshToolbarSub();
+    updateDurationLabels();
+    return true;
   }
   function parseDurationInput(raw){
     if(typeof raw === 'number') return raw;
@@ -571,8 +660,8 @@ a.vibe-item:active{background:var(--surface-2)}
       showStatus('Anh nhập số giây hợp lệ nhé — ví dụ 25, 36,8 hoặc 45.', 'error');
       return false;
     }
-    if(v < 1 || v > 600){
-      showStatus('Thời lượng mỗi đoạn từ 1 đến 600 giây nhé Anh.', 'error');
+    if(v < 1){
+      showStatus('Thời lượng mỗi đoạn phải từ 1 giây trở lên nhé Anh — không giới hạn tối đa, nhập bao nhiêu giây cũng được.', 'error');
       return false;
     }
     SEG = v;
@@ -1097,7 +1186,7 @@ a.vibe-item:active{background:var(--surface-2)}
 
       var badge = document.createElement('span');
       badge.className = 'seg-badge' + (isShort ? ' short' : '');
-      badge.textContent = isShort ? seg.duration.toFixed(2)+'s' : durShort(SEG)+' ✓';
+      badge.textContent = isShort ? seg.duration.toFixed(2)+'s' : durShort(seg.duration)+' ✓';
 
       var actions = document.createElement('div');
       actions.className='seg-actions';
@@ -1158,11 +1247,42 @@ a.vibe-item:active{background:var(--surface-2)}
         trackEl.addEventListener('pointercancel', endScrub);
       })(seg, prog.querySelector('.sp-track'));
 
+      // Per-segment duration editor: steppers apply at once, or type an
+      // exact length (decimals allowed) and press Đặt / Enter.
+      var edit = document.createElement('div');
+      edit.className='seg-edit';
+      edit.innerHTML = '<span class="se-label">Dài đoạn này</span>'
+        + '<button type="button" class="se-step" data-step="-5" aria-label="Bớt 5 giây đoạn '+(seg.index+1)+'">−5s</button>'
+        + '<button type="button" class="se-step" data-step="-1" aria-label="Bớt 1 giây đoạn '+(seg.index+1)+'">−1s</button>'
+        + '<input class="se-input" type="text" inputmode="decimal" value="'+durInputVal(seg.duration)+'" aria-label="Độ dài đoạn '+(seg.index+1)+' tính bằng giây" />'
+        + '<span class="se-unit">giây</span>'
+        + '<button type="button" class="se-step" data-step="1" aria-label="Thêm 1 giây đoạn '+(seg.index+1)+'">+1s</button>'
+        + '<button type="button" class="se-step" data-step="5" aria-label="Thêm 5 giây đoạn '+(seg.index+1)+'">+5s</button>'
+        + '<button type="button" class="se-apply">Đặt</button>';
+      (function(segRef, editEl){
+        var input = editEl.querySelector('.se-input');
+        var steps = editEl.querySelectorAll('.se-step');
+        for(var si=0; si<steps.length; si++){
+          (function(btn){
+            btn.addEventListener('click', function(){
+              setSegmentDuration(segRef.index, segRef.duration + parseFloat(btn.getAttribute('data-step')));
+            });
+          })(steps[si]);
+        }
+        editEl.querySelector('.se-apply').addEventListener('click', function(){
+          setSegmentDuration(segRef.index, input.value);
+        });
+        input.addEventListener('keydown', function(e){
+          if(e.key === 'Enter'){ e.preventDefault(); setSegmentDuration(segRef.index, input.value); }
+        });
+      })(seg, edit);
+
       row.appendChild(num);
       row.appendChild(main);
       row.appendChild(badge);
       row.appendChild(actions);
       row.appendChild(prog);
+      row.appendChild(edit);
       segmentList.appendChild(row);
     });
   }
@@ -1194,6 +1314,7 @@ a.vibe-item:active{background:var(--surface-2)}
       currentBuffer = buffer;
       setProgress(85);
       var duration = buffer.duration;
+      hasCustomSeg = false;
       segments = buildSegments(duration);
       var count = segments.length;
       // UI

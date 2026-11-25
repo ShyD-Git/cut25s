@@ -480,7 +480,7 @@ button{font-family:inherit}
         <input class="rename-input" id="namePrefix" type="text" maxlength="40" placeholder="Để trống = xao-tron" autocomplete="off" autocapitalize="off" spellcheck="false" />
         <div class="name-preview" id="namePreview">xao-tron.mp3</div>
       </div>
-      <p class="rename-hint">Để trống: <b>xao-tron.mp3</b>. Gõ tên ngắn (vd <b>nhac</b>): <b>nhac-xao-tron.mp3</b>.</p>
+      <p class="rename-hint">Để trống: <b>xao-tron.mp3</b>. Gõ tên ngắn (vd <b>nhac</b>): <b>nhac-xao-tron.mp3</b>. Tên này chỉ áp cho bài ghép — file từng đoạn khi chia sẻ riêng tự mang tên theo file gốc: <b>01-tên gốc.mp3</b>, <b>02-tên gốc.mp3</b>…</p>
     </div>
   </section>
 
@@ -533,7 +533,7 @@ button{font-family:inherit}
   </div>
   <p class="note">Bài ghép nối các đoạn khít nhau, không chèn khoảng lặng. File MP3 xuất ra được cắt theo số frame gần nhất với độ dài thật (lệch tối đa khoảng 0,01 giây) nên đưa vào CapCut không bị thừa đoạn trống ở đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: XTN-V12 · 18/11/2026</p>
+    <p class="upd">Mã cập nhật: XTN-V13 · 25/11/2026</p>
   </footer>
 </div>
 
@@ -625,6 +625,15 @@ button{font-family:inherit}
   function mergedName(ext){
     var p = cleanPrefix(namePrefixInput ? namePrefixInput.value : '');
     return (p ? p + '-xao-tron' : 'xao-tron') + '.' + (ext || outFormat);
+  }
+  // Original file's base name (no extension) for per-segment exports:
+  // segments are saved as 01-<tên gốc>, 02-<tên gốc>, … — spaces and
+  // Vietnamese characters are kept, only filename-illegal chars are swapped.
+  function origBaseName(){
+    var n = (currentFile && currentFile.name) ? String(currentFile.name) : '';
+    n = n.replace(/\.[a-z0-9]+$/i, '');
+    n = n.replace(/[\\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim();
+    return n || 'nhac';
   }
   function refreshNamePreview(){
     if(namePreviewEl) namePreviewEl.textContent = mergedName();
@@ -1461,8 +1470,7 @@ button{font-family:inherit}
       }
       btn.textContent = 'Đang mở chia sẻ đoạn ' + (segIdx + 1) + '…';
       await nextFrame();
-      var prefix = cleanPrefix(namePrefixInput ? namePrefixInput.value : '');
-      var name = (prefix ? prefix + '-' : '') + 'doan-' + pad(segIdx + 1) + '.' + encExt;
+      var name = pad(segIdx + 1) + '-' + origBaseName() + '.' + encExt;
       var file = new File([encBlob], name, { type: encBlob.type });
       if(canShareFiles([file])){
         try{
