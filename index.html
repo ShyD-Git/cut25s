@@ -128,7 +128,7 @@ button{font-family:inherit}
 .list{display:grid;gap:10px}
 .seg{
   background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;
-  display:flex;gap:12px;align-items:center;
+  display:flex;gap:12px;align-items:center;flex-wrap:wrap;
 }
 .seg-num{
   width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:var(--text);color:var(--bg);
@@ -138,6 +138,10 @@ button{font-family:inherit}
 .seg-main{flex:1;min-width:0}
 .seg-main strong{display:block;font-size:14.5px}
 .seg-main span{display:block;color:var(--muted);font-size:12.5px;font-family:"JetBrains Mono",monospace;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg-main .seg-range{display:flex;align-items:center;gap:6px;flex-wrap:wrap;white-space:normal;overflow:visible;text-overflow:clip;margin-top:4px}
+.seg-range .sr-t{color:var(--text);font-weight:600;background:var(--surface-2);padding:2px 7px;border-radius:7px}
+.seg-range .sr-arrow{color:var(--accent);font-weight:700}
+.seg-range .sr-dur{color:var(--accent);font-weight:700}
 .seg-badge{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
 .seg-badge.short{background:var(--warn);color:#8a6d00}
 @media(prefers-color-scheme: dark){.seg-badge.short{color:#f5c542}}
@@ -306,7 +310,7 @@ a.vibe-item:active{background:var(--surface-2)}
       <a class="vibe-item" href="https://shyd-git.github.io/cut25s/xao-tron/">Xáo Trộn Nhạc <span class="vi-arrow">→</span></a>
       <a class="vibe-item" href="https://shyd-git.github.io/cut25s/cat-video/">Cắt Video <span class="vi-arrow">→</span></a>
     </nav>
-    <p id="introText">Chọn 1 file nhạc — trang tự cắt thành các đoạn 25 giây, cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới, hoặc chỉnh dài riêng từng đoạn trong danh sách. Nghe thử rồi bấm Chia sẻ để lưu.</p>
+    <p id="introText">Chọn 1 file nhạc — trang tự cắt thành các đoạn 25 giây, cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới, hoặc nhập độ dài mới ngay trong một đoạn — số đó tự lưu và áp dụng cho đoạn đó cùng tất cả đoạn sau. Nghe thử rồi bấm Chia sẻ để lưu.</p>
     <div class="meta-row">
       <span class="pill"><span class="dot"></span> Xử lý ngay trên máy</span>
       <span class="pill">Đoạn <b id="pillSeg">25s</b> · cách <b>0,01s</b></span>
@@ -347,7 +351,7 @@ a.vibe-item:active{background:var(--surface-2)}
         <button class="btn btn-accent btn-sm" id="durApply" type="button">Áp dụng</button>
         <button class="btn btn-outline btn-sm" id="durReset" type="button">Về 25s</button>
       </div>
-      <p class="dur-hint">Không cài gì thì vẫn cắt <b>25s/đoạn</b>. Nhập được số lẻ như <b>36,8s</b> (gõ 36,8 hoặc 36.8 đều được) và <b>không giới hạn tối đa</b> — nhập bao nhiêu giây cũng được, kể cả trên 600s như 900s, 1800s. Chọn trước khi nạp file hoặc đổi sau cũng được — trang <b>cắt lại ngay</b>, khoảng cách giữa 2 đoạn vẫn giữ <b>0,01s</b>. Muốn <b>mỗi đoạn một độ dài riêng</b> thì chỉnh ngay trong từng thẻ đoạn bên dưới, dòng <b>“Dài đoạn này”</b> — đoạn kế tiếp tự co/giãn theo, giống trang Xáo Trộn.</p>
+      <p class="dur-hint">Không cài gì thì vẫn cắt <b>25s/đoạn</b>. Nhập được số lẻ như <b>36,8s</b> (gõ 36,8 hoặc 36.8 đều được) và <b>không giới hạn tối đa</b> — nhập bao nhiêu giây cũng được, kể cả trên 600s như 900s, 1800s. Chọn trước khi nạp file hoặc đổi sau cũng được — trang <b>cắt lại ngay</b>, khoảng cách giữa 2 đoạn vẫn giữ <b>0,01s</b>. Muốn đổi độ dài <b>từ một đoạn nào đó trở đi</b> thì nhập số giây ngay trong thẻ đoạn đó, dòng <b>“Dài đoạn này”</b> — bấm Đặt, Enter, hoặc chỉ cần bấm ra ngoài là <b>tự lưu</b>: đoạn đó và <b>mọi đoạn sau đều đổi theo</b> độ dài mới, không phải nhập tay từng đoạn nữa. Số giây đó cũng thành <b>thời lượng hiện tại</b> của trang.</p>
     </div>
   </section>
 
@@ -420,7 +424,7 @@ a.vibe-item:active{background:var(--surface-2)}
   </div>
   <p class="note">File dài thì lần cắt đầu lâu hơn vài giây. Đoạn MP3 đã cắt đúng độ dài từng đoạn nên ghép vào CapCut không còn dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: CN25S-V18 · 25/11/2026</p>
+    <p class="upd">Mã cập nhật: CN25S-V20 · 26/11/2026</p>
   </footer>
 </div>
 
@@ -552,7 +556,7 @@ a.vibe-item:active{background:var(--surface-2)}
     if(titleSegEl) titleSegEl.textContent = l;
     if(pillSegEl) pillSegEl.textContent = s;
     if(statSegEl) statSegEl.textContent = hasCustomSeg ? 'Từng đoạn / 0,01s' : s + ' / 0,01s';
-    if(introTextEl) introTextEl.textContent = 'Chọn 1 file nhạc — trang tự cắt thành các đoạn ' + l + ', cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới, hoặc chỉnh dài riêng từng đoạn trong danh sách. Nghe thử rồi bấm ' + dlVerb + ' để lưu.';
+    if(introTextEl) introTextEl.textContent = 'Chọn 1 file nhạc — trang tự cắt thành các đoạn ' + l + ', cách nhau 0,01 giây. Chọn thời lượng khác ở phần cài đặt bên dưới, hoặc nhập độ dài mới ngay trong một đoạn — số đó tự lưu và áp dụng cho đoạn đó cùng tất cả đoạn sau. Nghe thử rồi bấm ' + dlVerb + ' để lưu.';
     if(howTitleEl) howTitleEl.textContent = '2. Tự cắt ' + s;
     if(howTextEl) howTextEl.textContent = 'Mỗi đoạn ' + s + ', đoạn sau trễ hơn 0,01s. Đoạn cuối lấy phần còn lại.';
     for(var i=0;i<durPresetBtns.length;i++){
@@ -585,9 +589,9 @@ a.vibe-item:active{background:var(--surface-2)}
     var el = document.getElementById('toolbarSub');
     if(el){
       if(hasCustomSeg){
-        el.textContent = count + ' đoạn • độ dài từng đoạn đã chỉnh riêng, cách nhau 0,01s. Bấm −/+ hoặc nhập số giây ở dòng “Dài đoạn này” để chỉnh tiếp.';
+        el.textContent = count + ' đoạn • đã đổi độ dài từ một đoạn trở đi, cách nhau 0,01s. Nhập số giây ở dòng “Dài đoạn này” là đoạn đó và mọi đoạn sau đổi theo luôn.';
       } else {
-        el.textContent = count + ' đoạn • ' + durShort(SEG) + '/đoạn, cách nhau 0,01s' + (segments[count-1].duration < SEG - 0.05 ? ' • đoạn cuối ' + segments[count-1].duration.toFixed(2) + 's.' : '.') + ' Chỉnh dài riêng từng đoạn ở dòng “Dài đoạn này”.';
+        el.textContent = count + ' đoạn • ' + durShort(SEG) + '/đoạn, cách nhau 0,01s' + (segments[count-1].duration < SEG - 0.05 ? ' • đoạn cuối ' + segments[count-1].duration.toFixed(2) + 's.' : '.') + ' Nhập số giây ở dòng “Dài đoạn này”: áp dụng cho đoạn đó và tất cả đoạn sau.';
       }
     }
     if(statCount) statCount.textContent = count + ' đoạn';
@@ -606,11 +610,13 @@ a.vibe-item:active{background:var(--surface-2)}
     var v = Math.round(sec * 100) / 100;
     return String(v).replace('.', ',');
   }
-  // Per-segment duration edit (like the Shuffle page): changing one
-  // segment's length moves the boundary it shares with the NEXT segment —
-  // the next segment keeps its end and absorbs the difference, so the
-  // whole file stays covered with the same 0.01s gaps. Shortening the
-  // LAST segment turns the leftover tail into a new segment.
+  // Per-segment duration edit: the value typed (or stepped to) in one
+  // segment is SAVED as the current segment duration and re-cuts from
+  // that segment to the end of the file — this segment and every
+  // following one get the new length, still with 0.01s gaps, and the
+  // last one takes whatever remains. Segments BEFORE it keep the
+  // lengths they already have, so there is no need to type the same
+  // number into each segment one by one.
   function setSegmentDuration(idx, rawVal){
     var seg = segments[idx];
     if(!seg || !currentBuffer) return false;
@@ -624,39 +630,29 @@ a.vibe-item:active{background:var(--surface-2)}
       return false;
     }
     var total = Math.round(currentBuffer.duration * 100) / 100;
-    var isLast = idx === segments.length - 1;
-    if(!isLast){
-      var next = segments[idx+1];
-      var newEnd = Math.round((seg.start + v) * 100) / 100;
-      var nextStart = Math.round((newEnd + GAP) * 100) / 100;
-      var nextDur = Math.round((next.end - nextStart) * 100) / 100;
-      if(nextDur < 0.5){
-        var maxV = Math.round((next.end - GAP - 0.5 - seg.start) * 100) / 100;
-        showStatus('Đoạn ' + (idx+1) + ' dài tối đa ' + maxV + 's thôi Anh — dài hơn nữa thì đoạn ' + (idx+2) + ' còn dưới 0,5s.', 'error');
-        return false;
-      }
-      stopPlayback();
-      seg.end = newEnd;
-      seg.duration = Math.round((seg.end - seg.start) * 100) / 100;
-      next.start = nextStart;
-      next.duration = nextDur;
-    } else {
-      var maxDur = Math.round((total - seg.start) * 100) / 100;
-      if(v > maxDur + 0.001){
-        showStatus('Đoạn cuối chỉ còn tối đa ' + maxDur + 's là hết bài rồi Anh.', 'error');
-        return false;
-      }
-      stopPlayback();
-      seg.end = Math.round((seg.start + v) * 100) / 100;
-      seg.duration = Math.round((seg.end - seg.start) * 100) / 100;
-      var tailStart = Math.round((seg.end + GAP) * 100) / 100;
-      if(total - tailStart >= 0.05){
-        segments.push({ index: segments.length, start: tailStart, end: total, duration: Math.round((total - tailStart) * 100) / 100 });
-      }
+    stopPlayback();
+    // Rebuild the tail from this segment's start with the new length.
+    var tail = [];
+    var pos = seg.start;
+    var nIdx = idx;
+    while(pos < total - 0.001 && nIdx <= 10000){
+      var eEnd = Math.min(total, Math.round((pos + v) * 100) / 100);
+      var dDur = Math.round((eEnd - pos) * 100) / 100;
+      if(dDur <= 0.001) break;
+      tail.push({ index: nIdx, start: pos, end: eEnd, duration: dDur });
+      if(eEnd >= total - 0.001) break;
+      pos = Math.round((eEnd + GAP) * 100) / 100;
+      nIdx++;
     }
-    hasCustomSeg = true;
+    if(!tail.length) return false;
+    segments = segments.slice(0, idx).concat(tail);
+    // Save the value as the current duration: the header, the pills and
+    // the "Thời lượng mỗi đoạn" box all show it, and any later re-cut
+    // (or the next file) keeps using it until it is changed again.
+    SEG = v;
+    if(durCustomInput) durCustomInput.value = durInputVal(v);
+    hasCustomSeg = idx > 0;
     hideStatus();
-    for(var ri=0; ri<segments.length; ri++) segments[ri].index = ri;
     renderSegments();
     refreshDownloadLabels();
     refreshNamePreview();
@@ -1202,7 +1198,7 @@ a.vibe-item:active{background:var(--surface-2)}
       main.className='seg-main';
       var isShort = seg.duration < SEG - 0.05;
       var isLast = seg.index === segments.length - 1;
-      main.innerHTML = '<strong>Đoạn '+(seg.index+1)+ (isShort && isLast ? ' — đoạn cuối' : '') +'</strong><span>'+timeCode(seg.start)+' → '+timeCode(seg.end)+' &nbsp;•&nbsp; '+seg.duration.toFixed(2)+' giây</span><span class="seg-file" data-idx="'+seg.index+'">'+dlIcon+' '+shortName(seg.index)+'</span>';
+      main.innerHTML = '<strong>Đoạn '+(seg.index+1)+ (isShort && isLast ? ' — đoạn cuối' : '') +'</strong><span class="seg-range"><span class="sr-t">'+timeCode(seg.start)+'</span><span class="sr-arrow">→</span><span class="sr-t">'+timeCode(seg.end)+'</span><span class="sr-dur">• '+seg.duration.toFixed(2)+' giây</span></span><span class="seg-file" data-idx="'+seg.index+'">'+dlIcon+' '+shortName(seg.index)+'</span>';
 
       var badge = document.createElement('span');
       badge.className = 'seg-badge' + (isShort ? ' short' : '');
@@ -1267,8 +1263,10 @@ a.vibe-item:active{background:var(--surface-2)}
         trackEl.addEventListener('pointercancel', endScrub);
       })(seg, prog.querySelector('.sp-track'));
 
-      // Per-segment duration editor: steppers apply at once, or type an
-      // exact length (decimals allowed) and press Đặt / Enter.
+      // Per-segment duration editor: steppers apply at once; typing an
+      // exact length (decimals allowed) applies on Đặt, on Enter, or
+      // automatically when the field loses focus — and the value is
+      // saved and re-cuts this segment plus every following one.
       var edit = document.createElement('div');
       edit.className='seg-edit';
       edit.innerHTML = '<span class="se-label">Dài đoạn này</span>'
@@ -1294,6 +1292,13 @@ a.vibe-item:active{background:var(--surface-2)}
         });
         input.addEventListener('keydown', function(e){
           if(e.key === 'Enter'){ e.preventDefault(); setSegmentDuration(segRef.index, input.value); }
+        });
+        // Auto-apply: just typing the number and tapping/clicking away
+        // (or tabbing to the next field) saves it — no Đặt needed.
+        input.addEventListener('change', function(){
+          if(input.value !== '' && input.value !== durInputVal(segRef.duration)){
+            setSegmentDuration(segRef.index, input.value);
+          }
         });
       })(seg, edit);
 
