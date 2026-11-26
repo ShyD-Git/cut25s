@@ -351,7 +351,7 @@ a.vibe-item:active{background:var(--surface-2)}
         <button class="btn btn-accent btn-sm" id="durApply" type="button">Áp dụng</button>
         <button class="btn btn-outline btn-sm" id="durReset" type="button">Về 25s</button>
       </div>
-      <p class="dur-hint">Không cài gì thì vẫn cắt <b>25s/đoạn</b>. Nhập được số lẻ như <b>36,8s</b> (gõ 36,8 hoặc 36.8 đều được) và <b>không giới hạn tối đa</b> — nhập bao nhiêu giây cũng được, kể cả trên 600s như 900s, 1800s. Chọn trước khi nạp file hoặc đổi sau cũng được — trang <b>cắt lại ngay</b>, khoảng cách giữa 2 đoạn vẫn giữ <b>0,01s</b>. Muốn đổi độ dài <b>từ một đoạn nào đó trở đi</b> thì nhập số giây ngay trong thẻ đoạn đó, dòng <b>“Dài đoạn này”</b> — bấm Đặt, Enter, hoặc chỉ cần bấm ra ngoài là <b>tự lưu</b>: đoạn đó và <b>mọi đoạn sau đều đổi theo</b> độ dài mới, không phải nhập tay từng đoạn nữa. Số giây đó cũng thành <b>thời lượng hiện tại</b> của trang.</p>
+      <p class="dur-hint">Không cài gì thì vẫn cắt <b>25s/đoạn</b>. Nhập được số lẻ như <b>36,8s</b> (gõ 36,8 hoặc 36.8 đều được) và <b>không giới hạn tối đa</b> — nhập bao nhiêu giây cũng được, kể cả trên 600s như 900s, 1800s. Chọn trước khi nạp file hoặc đổi sau cũng được — trang <b>cắt lại ngay</b>, khoảng cách giữa 2 đoạn vẫn giữ <b>0,01s</b>. Muốn đổi độ dài <b>từ một đoạn nào đó trở đi</b> thì nhập số giây ngay trong thẻ đoạn đó, dòng <b>“Dài đoạn này”</b> — ô này cũng <b>nhập được số lẻ</b> như <b>36,8</b> hay <b>68.50</b>: bấm Đặt, Enter, hoặc chỉ cần bấm ra ngoài là <b>tự lưu</b>; bấm các nút −5s/+1s… thì tính tiếp từ <b>số đang gõ trong ô</b>. Đoạn đó và <b>mọi đoạn sau đều đổi theo</b> độ dài mới, không phải nhập tay từng đoạn nữa. Số giây đó cũng thành <b>thời lượng hiện tại</b> của trang.</p>
     </div>
   </section>
 
@@ -424,7 +424,7 @@ a.vibe-item:active{background:var(--surface-2)}
   </div>
   <p class="note">File dài thì lần cắt đầu lâu hơn vài giây. Đoạn MP3 đã cắt đúng độ dài từng đoạn nên ghép vào CapCut không còn dư đuôi.</p>
   <footer class="foot">
-    <p class="upd">Mã cập nhật: CN25S-V20 · 26/11/2026</p>
+    <p class="upd">Mã cập nhật: CN25S-V21 · 26/11/2026</p>
   </footer>
 </div>
 
@@ -1279,15 +1279,43 @@ a.vibe-item:active{background:var(--surface-2)}
         + '<button type="button" class="se-apply">Đặt</button>';
       (function(segRef, editEl){
         var input = editEl.querySelector('.se-input');
+        // The number currently in the box — decimals like 36,8 or 68.50
+        // included. The steppers build on THIS number, not on the
+        // segment's old length, so a typed decimal is never ignored.
+        function typedBase(){
+          var pv = parseDurationInput(input.value);
+          return (isFinite(pv) && !isNaN(pv) && pv > 0) ? pv : segRef.duration;
+        }
+        // Act on pointerdown, BEFORE focus leaves the box. Applying a
+        // new length re-renders the whole list; when that rebuild was
+        // triggered by the blur 'change' event it destroyed the very
+        // button being pressed, the click never landed, and a typed
+        // decimal looked like it "couldn't be entered". preventDefault
+        // keeps focus in the box (no blur, no 'change'), and the
+        // timestamp stops the click that follows from applying twice.
+        // A plain 'click' handler stays as fallback because keyboard
+        // Enter/Space on a focused button fires click only.
+        var handledAt = 0;
+        function bindAction(btn, fn){
+          btn.addEventListener('pointerdown', function(e){
+            e.preventDefault();
+            handledAt = Date.now();
+            fn();
+          });
+          btn.addEventListener('click', function(){
+            if(Date.now() - handledAt < 600) return;
+            fn();
+          });
+        }
         var steps = editEl.querySelectorAll('.se-step');
         for(var si=0; si<steps.length; si++){
           (function(btn){
-            btn.addEventListener('click', function(){
-              setSegmentDuration(segRef.index, segRef.duration + parseFloat(btn.getAttribute('data-step')));
+            bindAction(btn, function(){
+              setSegmentDuration(segRef.index, typedBase() + parseFloat(btn.getAttribute('data-step')));
             });
           })(steps[si]);
         }
-        editEl.querySelector('.se-apply').addEventListener('click', function(){
+        bindAction(editEl.querySelector('.se-apply'), function(){
           setSegmentDuration(segRef.index, input.value);
         });
         input.addEventListener('keydown', function(e){
@@ -1295,8 +1323,12 @@ a.vibe-item:active{background:var(--surface-2)}
         });
         // Auto-apply: just typing the number and tapping/clicking away
         // (or tabbing to the next field) saves it — no Đặt needed.
+        // Compare numbers, not text, so "68.50" and the shown "68,5"
+        // count as the same value and don't trigger a needless re-cut,
+        // while any genuinely different decimal always applies.
         input.addEventListener('change', function(){
-          if(input.value !== '' && input.value !== durInputVal(segRef.duration)){
+          var pv = parseDurationInput(input.value);
+          if(isFinite(pv) && !isNaN(pv) && Math.abs(pv - segRef.duration) > 0.001){
             setSegmentDuration(segRef.index, input.value);
           }
         });
